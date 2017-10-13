@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    textcanvas::TextCanvas canvas(100, 100);
+    textcanvas::TextCanvas canvas(100 + 1, 100 + 1);
     textcanvas::Point points[5];
     for (size_t n = 0; n < 5; ++n)
     {

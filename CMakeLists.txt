@@ -44,6 +44,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 ##############################################################################
 
-add_subdirectory(test)
+include_directories(.)
+add_subdirectory(tests)
 
 ##############################################################################
