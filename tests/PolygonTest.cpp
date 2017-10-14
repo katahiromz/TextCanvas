@@ -3,12 +3,13 @@
 
 int main(void)
 {
-    textcanvas::TextCanvas canvas(100 + 1, 100 + 1);
-    textcanvas::Point points[5];
-    for (size_t n = 0; n < 5; ++n)
+    using namespace textcanvas;
+    TextCanvas canvas(100 + 1, 100 + 1);
+    Point points[5];
+    for (coord_t n = 0; n < 5; ++n)
     {
-        points[n].x = 100 / 2 + 100 / 2 * cos(n * 72 * 2 * 3.14 / 180);
-        points[n].y = 100 / 2 + 100 / 2 * sin(n * 72 * 2 * 3.14 / 180);
+        points[n].x = my_round(100 / 2 + 100 / 2 * cos(n * 72 * 2 * 3.14 / 180));
+        points[n].y = my_round(100 / 2 + 100 / 2 * sin(n * 72 * 2 * 3.14 / 180));
     }
     canvas.color('*');
     canvas.circle(100 / 2, 100 / 2, 100 / 2);

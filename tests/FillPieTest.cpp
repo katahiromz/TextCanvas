@@ -3,8 +3,8 @@
 
 int main(void)
 {
-    textcanvas::TextCanvas canvas(13 * 13, 13 * 13);
-    double pi = textcanvas::pi;
+    using namespace textcanvas;
+    TextCanvas canvas(13 * 13, 13 * 13);
     for (int k = 0; k < 13; ++k)
     {
         for (int i = 0; i < 13; ++i)
