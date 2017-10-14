@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    1   // Version 1
+#define TEXT_CANVAS_HPP_    2   // Version 2
 
 #if _MSC_VER > 1000
     #pragma once
@@ -150,6 +150,8 @@ namespace textcanvas
 
         void fill(const TextCanvas& bin);
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
+        void get_subimage(coord_t x0, coord_t y0, coord_t x1, coord_t y1, TextCanvas& image) const;
+        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(Point p, color_t ch, bool surface = false);
@@ -572,6 +574,47 @@ namespace textcanvas
             {
                 m_text[i] = image[i];
             }
+        }
+    }
+
+    inline void TextCanvas::get_subimage(coord_t x0, coord_t y0, coord_t x1, coord_t y1, TextCanvas& image) const
+    {
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        image.reset(x1 - x0 + 1, y1 - y0 + 1, 0);
+
+        coord_t py = 0;
+        for (coord_t y = y0; y <= y1; ++y)
+        {
+            coord_t px = 0;
+            for (coord_t x = x0; x <= x1; ++x)
+            {
+                color_t ch = get_pixel(x, y);
+                image.put_pixel(px, py, ch);
+                ++px;
+            }
+            ++py;
+        }
+    }
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image)
+    {
+        coord_t x1 = x0 + image.width();
+        coord_t y1 = y0 + image.height();
+
+        coord_t py = 0;
+        for (coord_t y = y0; y <= y1; ++y)
+        {
+            coord_t px = 0;
+            for (coord_t x = x0; x <= x1; ++x)
+            {
+                color_t ch = image.get_pixel(px, py);
+                put_pixel(x, y, ch);
+                ++px;
+            }
+            ++py;
         }
     }
 
@@ -1345,7 +1388,7 @@ namespace textcanvas
     }
 
     template <typename T_PUTTER>
-    void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter)
+    inline void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter)
     {
         if (start_radian > end_radian)
             return;
@@ -1628,7 +1671,7 @@ namespace textcanvas
         lines(points.size(), &points[0]);
     }
     template <typename T_PUTTER>
-    void lines(size_t num_points, const Point *points, T_PUTTER& putter)
+    inline void TextCanvas::lines(size_t num_points, const Point *points, T_PUTTER& putter)
     {
         for (size_t i = 0; i < num_points / 2; ++i)
         {
