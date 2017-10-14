@@ -8,9 +8,9 @@ int main(void)
     {
         for (int i = 0; i < 13; ++i)
         {
-            canvas.pixel('-');
+            canvas.color('-');
             canvas.rectangle(i * 13, k * 13, i * 13 + i, k * 13 + k);
-            canvas.pixel('#');
+            canvas.color('#');
             canvas.ellipse(i * 13, k * 13, i * 13 + i, k * 13 + k);
         }
     }

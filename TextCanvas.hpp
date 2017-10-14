@@ -24,33 +24,19 @@ namespace textcanvas
     typedef std::size_t size_t;
     typedef std::ptrdiff_t ptrdiff_t;
     typedef ptrdiff_t coord_t;
+    typedef char_type color_t;
 
-    static const char_type zero = char_type(0);
-    static const char_type one = char_type(1);
-    static const char_type space = char_type(' ');
-    static const char_type newline = char_type('\n');
 #ifdef M_PI
     static const double pi = M_PI;
 #else
     static const double pi = 3.1415926535;
 #endif
+    static const double epsilon = 0.001;
 
-    namespace
-    {
-        inline coord_t round(double d)
-        {
-            return coord_t(d + 0.5);
-        }
-        inline double normalize_radian(double radian)
-        {
-            radian = fmod(radian, 2 * M_PI);
-            if (radian <= -pi)
-                radian += 2 * pi;
-            else if (radian >= M_PI)
-                radian -= 2 * pi;
-            return radian;
-        }
-    }
+    static const color_t zero = color_t(0);
+    static const color_t one = color_t(1);
+    static const color_t space = color_t(' ');
+    static const color_t newline = color_t('\n');
 
     ///////////////////////////////////////////////////////////////////////////
     // Point and Points
@@ -77,13 +63,41 @@ namespace textcanvas
     }
 
     ///////////////////////////////////////////////////////////////////////////
+
+    inline coord_t round(double d)
+    {
+        return coord_t(d + 0.5);
+    }
+
+    inline double normalize_radian(double radian)
+    {
+        radian = fmod(radian, 2 * M_PI);
+        if (radian < -pi)
+            radian += 2 * pi;
+        else if (radian > M_PI)
+            radian -= 2 * pi;
+        return radian;
+    }
+
+    inline bool
+    in_rect(coord_t x, coord_t y, coord_t x0, coord_t y0, coord_t x1, coord_t y1)
+    {
+        return x0 <= x && x <= x1 && y0 <= y && y <= y1;
+    }
+    
+    bool get_polygon_box(Point& p0, Point& p1, size_t num_points, const Point *points);
+
+    size_t crossing_number(Point p, const Points& points);
+    coord_t winding_number(Point p, const Points& points);
+
+    ///////////////////////////////////////////////////////////////////////////
     // TextCanvas
 
     class TextCanvas
     {
     public:
         TextCanvas();
-        TextCanvas(coord_t width, coord_t height, char_type ch = space);
+        TextCanvas(coord_t width, coord_t height, color_t ch = space);
         TextCanvas(const TextCanvas& tc);
         TextCanvas& operator=(const TextCanvas& tc);
         virtual ~TextCanvas();
@@ -92,14 +106,17 @@ namespace textcanvas
         coord_t     m_width;
         coord_t     m_height;
         string_type m_text;
-        char_type   m_ch;
+        color_t     m_ch;
+        Point       m_pos;
 
     public:
         coord_t width() const;
         coord_t height() const;
         coord_t count() const;
-              char_type& operator[](size_t index);
-        const char_type& operator[](size_t index) const;
+              Point& pos();
+        const Point& pos() const;
+              color_t& operator[](size_t index);
+        const color_t& operator[](size_t index) const;
 
         string_type to_str() const;
         bool in_range(coord_t x, coord_t y) const;
@@ -108,19 +125,23 @@ namespace textcanvas
         const string_type& data() const;
         bool same_size(const TextCanvas& tc) const;
 
-        void clear(char_type ch = space);
-        void reset(coord_t width, coord_t height, char_type ch = space);
-        void resize(coord_t width, coord_t height, char_type ch = space);
+        void clear(color_t ch = space);
+        void reset(coord_t width, coord_t height, color_t ch = space);
+        void resize(coord_t width, coord_t height, color_t ch = space);
 
-        char_type get_pixel(coord_t x, coord_t y) const;
-        char_type get_pixel(Point p) const;
-        void set_pixel(coord_t x, coord_t y, char_type ch);
-        void set_pixel(Point p, char_type ch);
-        void set_pixel(coord_t x, coord_t y);
-        void set_pixel(Point p);
+        color_t get_pixel(coord_t x, coord_t y) const;
+        color_t get_pixel(Point p) const;
+        void put_pixel(coord_t x, coord_t y, color_t ch);
+        void put_pixel(Point p, color_t ch);
+        void put_pixel(coord_t x, coord_t y);
+        void put_pixel(Point p);
+        void put_pixel_unsafe(coord_t x, coord_t y, color_t ch);
+        void put_pixel_unsafe(Point p, color_t ch);
+        void put_pixel_unsafe(coord_t x, coord_t y);
+        void put_pixel_unsafe(Point p);
 
-        char_type pixel() const;
-        void pixel(char_type ch);
+        color_t color() const;
+        void color(color_t ch);
 
         friend TextCanvas operator!(const TextCanvas& bin);
         friend TextCanvas operator&(const TextCanvas& bin1, const TextCanvas& bin2);
@@ -130,126 +151,203 @@ namespace textcanvas
         void fill(const TextCanvas& bin);
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
 
-        void flood_fill(coord_t x, coord_t y, char_type ch, bool surface = false);
-        void flood_fill(Point p, char_type ch, bool surface = false);
-        void flood_fill_bordered(coord_t x, coord_t y, char_type border_ch);
-        void flood_fill_bordered(Point p, char_type border_ch);
-        void flood_fill_surface(coord_t x, coord_t y, char_type surface_ch);
-        void flood_fill_surface(Point p, char_type surface_ch);
+        void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
+        void flood_fill(Point p, color_t ch, bool surface = false);
+        void flood_fill_bordered(coord_t x, coord_t y, color_t border_ch);
+        void flood_fill_bordered(Point p, color_t border_ch);
+        void flood_fill_surface(coord_t x, coord_t y, color_t surface_ch);
+        void flood_fill_surface(Point p, color_t surface_ch);
+
+        void move_to(coord_t x, coord_t y);
+        void move_to(Point p);
+
+        void line_to(coord_t x, coord_t y);
+        void line_to(Point p);
+        template <typename T_PUTTER>
+        void line_to(coord_t x, coord_t y, T_PUTTER& putter);
+        template <typename T_PUTTER>
+        void line_to(Point p, T_PUTTER& putter);
 
         void line(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
         void line(Point p0, Point p1);
+        template <typename T_PUTTER>
+        void line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
+
         void rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
         void rectangle(Point p0, Point p1);
+        template <typename T_PUTTER>
+        void rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
+
         void fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
         void fill_rectangle(Point p0, Point p1);
+        template <typename T_PUTTER>
+        void fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
+
         void circle(coord_t x0, coord_t y0, coord_t r);
         void circle(const Point& c, coord_t r);
+        template <typename T_PUTTER>
+        void circle(coord_t x0, coord_t y0, coord_t r, T_PUTTER& putter);
+
         void fill_circle(coord_t x0, coord_t y0, coord_t r);
         void fill_circle(const Point& c, coord_t r);
+        template <typename T_PUTTER>
+        void fill_circle(coord_t x0, coord_t y0, coord_t r, T_PUTTER& putter);
+
         void ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
         void ellipse(Point p0, Point p1);
+        template <typename T_PUTTER>
+        void ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
+
         void fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
         void fill_ellipse(Point p0, Point p1);
-        void arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian);
-        void arc(Point p0, Point p1, float start_radian, float end_radian);
+        template <typename T_PUTTER>
+        void fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
+
+        void arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise = false);
+        void arc(Point p0, Point p1, float start_radian, float end_radian, bool clockwise = false);
+        template <typename T_PUTTER>
+        void arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise, T_PUTTER& putter);
+
+        void arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise = false);
+        void arc_to(Point p0, Point p1, float start_radian, float end_radian, bool clockwise = false);
+        template <typename T_PUTTER>
+        void arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise, T_PUTTER& putter);
+
         void pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian);
         void pie(Point p0, Point p1, float start_radian, float end_radian);
+        template <typename T_PUTTER>
+        void pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter);
+
         void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian);
         void fill_pie(Point p0, Point p1, float start_radian, float end_radian);
+        template <typename T_PUTTER>
+        void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter);
+
         void round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry);
         void round_rect(Point p0, Point p1, coord_t rx, coord_t ry);
+        template <typename T_PUTTER>
+        void round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter);
+
         void fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry);
         void fill_round_rect(Point p0, Point p1, coord_t rx, coord_t ry);
+        template <typename T_PUTTER>
+        void fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter);
 
         void lines(size_t num_points, const Point *points);
         void lines(const Points& points);
+        template <typename T_PUTTER>
+        void lines(size_t num_points, const Point *points, T_PUTTER& putter);
+
         void polyline(size_t num_points, const Point *points);
         void polyline(const Points& points);
+        template <typename T_PUTTER>
+        void polyline(size_t num_points, const Point *points, T_PUTTER& putter);
+
         void polygon(size_t num_points, const Point *points);
         void polygon(const Points& points);
+        template <typename T_PUTTER>
+        void polygon(size_t num_points, const Point *points, T_PUTTER& putter);
+
         void fill_polygon(size_t num_points, const Point *points, bool alternate = false);
         void fill_polygon(const Points& points, bool alternate = false);
-        void fill_polygon_alternate(size_t num_points, const Point *points);
-        void fill_polygon_alternate(const Points& points);
-        void fill_polygon_winding(size_t num_points, const Point *points);
-        void fill_polygon_winding(const Points& points);
+        template <typename T_PUTTER>
+        void fill_polygon(size_t num_points, const Point *points, bool alternate, T_PUTTER& putter);
+
+        template <typename T_PUTTER>
+        void fill_polygon_alternate(size_t num_points, const Point *points, T_PUTTER& putter);
+        template <typename T_PUTTER>
+        void fill_polygon_alternate(const Points& points, T_PUTTER& putter);
+
+        template <typename T_PUTTER>
+        void fill_polygon_winding(size_t num_points, const Point *points, T_PUTTER& putter);
+        template <typename T_PUTTER>
+        void fill_polygon_winding(const Points& points, T_PUTTER& putter);
+
+    protected:
+        struct SimplePutter
+        {
+            TextCanvas *m_tc;
+            SimplePutter(TextCanvas *tc) : m_tc(tc)
+            {
+            }
+            void operator()(coord_t x, coord_t y)
+            {
+                m_tc->put_pixel(x, y);
+            }
+        };
     };
 
     ///////////////////////////////////////////////////////////////////////////
 
-    namespace
+    inline bool get_polygon_box(Point& p0, Point& p1, size_t num_points, const Point *points)
     {
-        inline bool get_polygon_box(Point& p0, Point& p1, size_t num_points, const Point *points)
-        {
-            if (num_points == 0)
-                return false;
+        if (num_points == 0)
+            return false;
 
-            p0 = p1 = points[0];
-            for (size_t i = 1; i < num_points; ++i)
-            {
-                coord_t x = points[i].x;
-                if (x < p0.x)
-                    p0.x = x;
-                if (x > p1.x)
-                    p1.x = x;
-                coord_t y = points[i].y;
-                if (y < p0.y)
-                    p0.y = y;
-                if (y > p1.y)
-                    p1.y = y;
-            }
-            return true;
-        }
-
-        inline size_t crossing_number(Point p, const Points& points)
+        p0 = p1 = points[0];
+        for (size_t i = 1; i < num_points; ++i)
         {
-            size_t ret = 0;
-            for (size_t i = 0; i < points.size() - 1; ++i)
-            {
-                if ((points[i].y <= p.y && points[i + 1].y > p.y) ||
-                    (points[i].y > p.y && points[i + 1].y <= p.y))
-                {
-                    float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
-                    if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
-                    {
-                        ++ret;
-                    }
-                }
-            }
-            return ret;
+            coord_t x = points[i].x;
+            if (x < p0.x)
+                p0.x = x;
+            if (x > p1.x)
+                p1.x = x;
+            coord_t y = points[i].y;
+            if (y < p0.y)
+                p0.y = y;
+            if (y > p1.y)
+                p1.y = y;
         }
-        inline coord_t winding_number(Point p, const Points& points)
-        {
-            coord_t ret = 0;
-            for (size_t i = 0; i < points.size() - 1; ++i)
-            {
-                if (points[i].y <= p.y && points[i + 1].y > p.y)
-                {
-                    float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
-                    if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
-                        ++ret;
-                }
-                else if (points[i].y > p.y && points[i + 1].y <= p.y)
-                {
-                    float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
-                    if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
-                        --ret;
-                }
-            }
-            return ret;
-        }
+        return true;
     }
 
-    inline TextCanvas::TextCanvas() : m_width(0), m_height(0), m_text(), m_ch('*')
+    inline size_t crossing_number(Point p, const Points& points)
+    {
+        size_t ret = 0;
+        for (size_t i = 0; i < points.size() - 1; ++i)
+        {
+            if ((points[i].y <= p.y && points[i + 1].y > p.y) ||
+                (points[i].y > p.y && points[i + 1].y <= p.y))
+            {
+                float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
+                if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
+                {
+                    ++ret;
+                }
+            }
+        }
+        return ret;
+    }
+    inline coord_t winding_number(Point p, const Points& points)
+    {
+        coord_t ret = 0;
+        for (size_t i = 0; i < points.size() - 1; ++i)
+        {
+            if (points[i].y <= p.y && points[i + 1].y > p.y)
+            {
+                float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
+                if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
+                    ++ret;
+            }
+            else if (points[i].y > p.y && points[i + 1].y <= p.y)
+            {
+                float f = float(p.y - points[i].y) / (points[i + 1].y - points[i].y);
+                if (p.x - points[i].x < f * (points[i + 1].x - points[i].x))
+                    --ret;
+            }
+        }
+        return ret;
+    }
+
+    inline TextCanvas::TextCanvas() : m_width(0), m_height(0), m_text(), m_ch('*'), m_pos(0, 0)
     {
     }
-    inline TextCanvas::TextCanvas(coord_t width, coord_t height, char_type ch)
-        : m_width(width), m_height(height), m_text(width * height, ch), m_ch('*')
+    inline TextCanvas::TextCanvas(coord_t width, coord_t height, color_t ch)
+        : m_width(width), m_height(height), m_text(width * height, ch), m_ch('*'), m_pos(0, 0)
     {
     }
     inline TextCanvas::TextCanvas(const TextCanvas& tc)
-        : m_width(tc.m_width), m_height(tc.m_height), m_text(tc.m_text), m_ch(tc.m_ch)
+        : m_width(tc.m_width), m_height(tc.m_height), m_text(tc.m_text), m_ch(tc.m_ch), m_pos(tc.m_pos)
     {
     }
     inline TextCanvas& TextCanvas::operator=(const TextCanvas& tc)
@@ -257,6 +355,8 @@ namespace textcanvas
         m_width = tc.m_width;
         m_height = tc.m_height;
         m_text = tc.m_text;
+        m_ch = tc.m_ch;
+        m_pos = tc.m_pos;
         return *this;
     }
     inline TextCanvas::~TextCanvas()
@@ -275,11 +375,19 @@ namespace textcanvas
     {
         return m_width * m_height;
     }
-    inline char_type& TextCanvas::operator[](size_t index)
+    inline Point& TextCanvas::pos()
+    {
+        return m_pos;
+    }
+    inline const Point& TextCanvas::pos() const
+    {
+        return m_pos;
+    }
+    inline color_t& TextCanvas::operator[](size_t index)
     {
         return m_text[index];
     }
-    inline const char_type& TextCanvas::operator[](size_t index) const
+    inline const color_t& TextCanvas::operator[](size_t index) const
     {
         return m_text[index];
     }
@@ -302,6 +410,7 @@ namespace textcanvas
     {
         return in_range(p.x, p.y);
     }
+
     inline string_type& TextCanvas::data()
     {
         return m_text;
@@ -315,17 +424,18 @@ namespace textcanvas
         return m_width == tc.m_width && m_height == tc.m_height;
     }
 
-    inline void TextCanvas::reset(coord_t width, coord_t height, char_type ch)
+    inline void TextCanvas::reset(coord_t width, coord_t height, color_t ch)
     {
         m_width = width;
         m_height = height;
         m_text.assign(width * height, ch);
+        m_pos.x = m_pos.y = 0;
     }
-    inline void TextCanvas::clear(char_type ch)
+    inline void TextCanvas::clear(color_t ch)
     {
         m_text.assign(m_width * m_height, ch);
     }
-    inline void TextCanvas::resize(coord_t width, coord_t height, char_type ch)
+    inline void TextCanvas::resize(coord_t width, coord_t height, color_t ch)
     {
         const coord_t min_width = std::min(m_width, width);
         const coord_t min_height = std::min(m_height, height);
@@ -342,7 +452,7 @@ namespace textcanvas
         m_height = height;
     }
 
-    inline char_type TextCanvas::get_pixel(coord_t x, coord_t y) const
+    inline color_t TextCanvas::get_pixel(coord_t x, coord_t y) const
     {
         if (in_range(x, y))
         {
@@ -350,35 +460,53 @@ namespace textcanvas
         }
         return space;
     }
-    inline char_type TextCanvas::get_pixel(Point p) const
+    inline color_t TextCanvas::get_pixel(Point p) const
     {
         return get_pixel(p.x, p.y);
     }
-    inline void TextCanvas::set_pixel(coord_t x, coord_t y, char_type ch)
+    inline void TextCanvas::put_pixel(coord_t x, coord_t y, color_t ch)
     {
         if (in_range(x, y))
         {
             m_text[y * m_width + x] = ch;
         }
+        m_pos.x = x;
+        m_pos.y = y;
     }
-    inline void TextCanvas::set_pixel(Point p, char_type ch)
+    inline void TextCanvas::put_pixel(Point p, color_t ch)
     {
-        set_pixel(p.x, p.y, ch);
+        put_pixel(p.x, p.y, ch);
     }
-    inline void TextCanvas::set_pixel(coord_t x, coord_t y)
+    inline void TextCanvas::put_pixel(coord_t x, coord_t y)
     {
-        set_pixel(x, y, m_ch);
+        put_pixel(x, y, m_ch);
     }
-    inline void TextCanvas::set_pixel(Point p)
+    inline void TextCanvas::put_pixel(Point p)
     {
-        set_pixel(p, m_ch);
+        put_pixel(p, m_ch);
+    }
+    inline void TextCanvas::put_pixel_unsafe(coord_t x, coord_t y, color_t ch)
+    {
+        m_text[y * m_width + x] = ch;
+    }
+    inline void TextCanvas::put_pixel_unsafe(Point p, color_t ch)
+    {
+        put_pixel_unsafe(p.x, p.y, ch);
+    }
+    inline void TextCanvas::put_pixel_unsafe(coord_t x, coord_t y)
+    {
+        put_pixel_unsafe(x, y, m_ch);
+    }
+    inline void TextCanvas::put_pixel_unsafe(Point p)
+    {
+        put_pixel_unsafe(p.x, p.y);
     }
 
-    inline char_type TextCanvas::pixel() const
+    inline color_t TextCanvas::color() const
     {
         return m_ch;
     }
-    inline void TextCanvas::pixel(char_type ch)
+    inline void TextCanvas::color(color_t ch)
     {
         m_ch = ch;
     }
@@ -447,18 +575,18 @@ namespace textcanvas
         }
     }
 
-    inline void TextCanvas::flood_fill(coord_t x, coord_t y, char_type ch, bool surface)
+    inline void TextCanvas::flood_fill(coord_t x, coord_t y, color_t ch, bool surface)
     {
         if (surface)
             flood_fill_surface(x, y, ch);
         else
             flood_fill_bordered(x, y, ch);
     }
-    inline void TextCanvas::flood_fill(Point p, char_type ch, bool surface)
+    inline void TextCanvas::flood_fill(Point p, color_t ch, bool surface)
     {
         flood_fill(p.x, p.y, ch, surface);
     }
-    inline void TextCanvas::flood_fill_bordered(coord_t x, coord_t y, char_type border_ch)
+    inline void TextCanvas::flood_fill_bordered(coord_t x, coord_t y, color_t border_ch)
     {
         Points points;
         Point p(x, y), p2;
@@ -471,7 +599,7 @@ namespace textcanvas
             p = points[i];
             if (get_pixel(p) != border_ch)
             {
-                set_pixel(p, m_ch);
+                put_pixel(p, m_ch);
                 p2.x = p.x - 1;
                 p2.y = p.y;
                 if (in_range(p2) && get_pixel(p2) != border_ch &&
@@ -502,8 +630,10 @@ namespace textcanvas
                 }
             }
         }
+        m_pos.x = x;
+        m_pos.y = y;
     }
-    inline void TextCanvas::flood_fill_surface(coord_t x, coord_t y, char_type surface_ch)
+    inline void TextCanvas::flood_fill_surface(coord_t x, coord_t y, color_t surface_ch)
     {
         Points points;
         Point p(x, y), p2;
@@ -516,7 +646,7 @@ namespace textcanvas
             p = points[i];
             if (get_pixel(p) == surface_ch)
             {
-                set_pixel(p, m_ch);
+                put_pixel(p, m_ch);
                 p2.x = p.x - 1;
                 p2.y = p.y;
                 if (in_range(p2) && get_pixel(p2) == surface_ch)
@@ -535,26 +665,65 @@ namespace textcanvas
                     points.push_back(p2);
             }
         }
+        m_pos.x = x;
+        m_pos.y = y;
     }
-    inline void TextCanvas::flood_fill_bordered(Point p, char_type border_ch)
+    inline void TextCanvas::flood_fill_bordered(Point p, color_t border_ch)
     {
         flood_fill_bordered(p.x, p.y, border_ch);
     }
-    inline void TextCanvas::flood_fill_surface(Point p, char_type surface_ch)
+    inline void TextCanvas::flood_fill_surface(Point p, color_t surface_ch)
     {
         flood_fill_surface(p.x, p.y, surface_ch);
     }
 
+    inline void TextCanvas::move_to(coord_t x, coord_t y)
+    {
+        m_pos.x = x;
+        m_pos.y = y;
+    }
+    inline void TextCanvas::move_to(Point p)
+    {
+        m_pos = p;
+    }
+
+    inline void TextCanvas::line_to(coord_t x, coord_t y)
+    {
+        line(m_pos.x, m_pos.y, x, y);
+    }
+    inline void TextCanvas::line_to(Point p)
+    {
+        line(m_pos, p);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::line_to(coord_t x, coord_t y, T_PUTTER& putter)
+    {
+        line(m_pos.x, m_pos.y, x, y, putter);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::line_to(Point p, T_PUTTER& putter)
+    {
+        line_to(p.x, p.y, putter);
+    }
+
     inline void TextCanvas::line(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        const coord_t dx = std::abs(x1 - x0);
-        const coord_t dy = std::abs(y1 - y0);
-        const coord_t sx = (x0 < x1) ? 1 : -1;
-        const coord_t sy = (y0 < y1) ? 1 : -1;
+        SimplePutter putter(this);
+        line(x0, y0, x1, y1, putter);
+    }
+    inline void TextCanvas::line(Point p0, Point p1)
+    {
+        line(p0.x, p0.y, p1.x, p1.y);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
+    {
+        const coord_t dx = std::abs(x1 - x0), dy = std::abs(y1 - y0);
+        const coord_t sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
         coord_t err = dx - dy;
         for (;;)
         {
-            set_pixel(x0, y0);
+            put_pixel(x0, y0);
             if (x0 == x1 && y0 == y1)
                 break;
 
@@ -570,25 +739,43 @@ namespace textcanvas
                 y0 += sy;
             }
         }
-    }
-    inline void TextCanvas::line(Point p0, Point p1)
-    {
-        line(p0.x, p0.y, p1.x, p1.y);
+        m_pos.x = x1;
+        m_pos.y = y1;
     }
 
     inline void TextCanvas::rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        line(x0, y0, x1, y0);
-        line(x1, y0, x1, y1);
-        line(x1, y1, x0, y1);
-        line(x0, y1, x0, y0);
+        SimplePutter putter(this);
+        rectangle(x0, y0, x1, y1, putter);
     }
     inline void TextCanvas::rectangle(Point p0, Point p1)
     {
         rectangle(p0.x, p0.y, p1.x, p1.y);
     }
+    template <typename T_PUTTER>
+    inline void TextCanvas::rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
+    {
+        line(x0, y0, x1, y0, putter);
+        line(x1, y0, x1, y1, putter);
+        line(x1, y1, x0, y1, putter);
+        line(x0, y1, x0, y0, putter);
+        m_pos.x = x1;
+        m_pos.y = y1;
+    }
+
     inline void TextCanvas::fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
+        SimplePutter putter(this);
+        fill_rectangle(x0, y0, x1, y1, putter);
+    }
+    inline void TextCanvas::fill_rectangle(Point p0, Point p1)
+    {
+        fill_rectangle(p0.x, p0.y, p1.x, p1.y);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
+    {
+        const coord_t x2 = x1, y2 = y1;
         if (x0 > x1)
             std::swap(x0, x1);
         if (y0 > y1)
@@ -605,30 +792,38 @@ namespace textcanvas
         {
             for (coord_t x = x0; x <= x1; ++x)
             {
-                set_pixel(x, y);
+                putter(x, y);
             }
         }
-    }
-    inline void TextCanvas::fill_rectangle(Point p0, Point p1)
-    {
-        fill_rectangle(p0.x, p0.y, p1.x, p1.y);
+        m_pos.x = x2;
+        m_pos.y = y2;
     }
 
     inline void TextCanvas::circle(coord_t x0, coord_t y0, coord_t r)
+    {
+        SimplePutter putter(this);
+        circle(x0, y0, r, putter);
+    }
+    inline void TextCanvas::circle(const Point& c, coord_t r)
+    {
+        circle(c.x, c.y, r);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::circle(coord_t x0, coord_t y0, coord_t r, T_PUTTER& putter)
     {
         coord_t x = r, y = 0;
         coord_t f = 3 - 2 * x;
 
         while (x >= y)
         {
-            set_pixel(x0 + x, y0 + y);
-            set_pixel(x0 - x, y0 + y);
-            set_pixel(x0 + x, y0 - y);
-            set_pixel(x0 - x, y0 - y);
-            set_pixel(x0 + y, y0 + x);
-            set_pixel(x0 - y, y0 + x);
-            set_pixel(x0 + y, y0 - x);
-            set_pixel(x0 - y, y0 - x);
+            putter(x0 + x, y0 + y);
+            putter(x0 - x, y0 + y);
+            putter(x0 + x, y0 - y);
+            putter(x0 - x, y0 - y);
+            putter(x0 + y, y0 + x);
+            putter(x0 - y, y0 + x);
+            putter(x0 + y, y0 - x);
+            putter(x0 - y, y0 - x);
             if (f >= 0)
             {
                 --x;
@@ -637,12 +832,21 @@ namespace textcanvas
             ++y;
             f += 4 * y + 2;
         }
+        m_pos.x = x0;
+        m_pos.y = y0;
     }
-    inline void TextCanvas::circle(const Point& c, coord_t r)
-    {
-        circle(c.x, c.y, r);
-    }
+
     inline void TextCanvas::fill_circle(coord_t x0, coord_t y0, coord_t r)
+    {
+        SimplePutter putter(this);
+        fill_circle(x0, y0, r, putter);
+    }
+    inline void TextCanvas::fill_circle(const Point& c, coord_t r)
+    {
+        fill_circle(c.x, c.y, r);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_circle(coord_t x0, coord_t y0, coord_t r, T_PUTTER& putter)
     {
         coord_t x = r, y = 0;
         coord_t f = 3 - 2 * x;
@@ -651,13 +855,13 @@ namespace textcanvas
         {
             for (coord_t px = x0 - x; px <= x0 + x; ++px)
             {
-                set_pixel(px, y0 + y);
-                set_pixel(px, y0 - y);
+                putter(px, y0 + y);
+                putter(px, y0 - y);
             }
             for (coord_t px = x0 - y; px <= x0 + y; ++px)
             {
-                set_pixel(px, y0 + x);
-                set_pixel(px, y0 - x);
+                putter(px, y0 + x);
+                putter(px, y0 - x);
             }
             if (f >= 0)
             {
@@ -667,13 +871,12 @@ namespace textcanvas
             ++y;
             f += 4 * y + 2;
         }
-    }
-    inline void TextCanvas::fill_circle(const Point& c, coord_t r)
-    {
-        fill_circle(c.x, c.y, r);
+        m_pos.x = x0;
+        m_pos.y = y0;
     }
 
-    inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
+    template <typename T_PUTTER>
+    inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
     {
         if (x0 > x1)
             std::swap(x0, x1);
@@ -691,39 +894,45 @@ namespace textcanvas
             {
                 for (coord_t x = x0; x <= x1; ++x)
                 {
-                    set_pixel(x, y);
+                    putter(x, y);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
         if (u < 1)
         {
             for (coord_t y = y0; y <= y1; ++y)
             {
-                set_pixel(x0, y);
+                putter(x0, y);
             }
             if (dx == 1)
             {
                 for (coord_t y = -dy / 4; y <= dy / 4; ++y)
                 {
-                    set_pixel(x0 + 1, py + y);
+                    putter(x0 + 1, py + y);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
         if (v < 1)
         {
             for (coord_t x = x0; x <= x1; ++x)
             {
-                set_pixel(x, y0);
+                putter(x, y0);
             }
             if (dy == 1)
             {
                 for (coord_t x = -dx / 4; x <= dx / 4; ++x)
                 {
-                    set_pixel(px + x, y0 + 1);
+                    putter(px + x, y0 + 1);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
 
@@ -739,32 +948,32 @@ namespace textcanvas
 
         if (!(dy & 1) && dx < 3)
         {
-            set_pixel(px + x, round(py + y));
-            set_pixel(px - x, round(py + y));
+            putter(px + x, round(py + y));
+            putter(px - x, round(py + y));
         }
 
         while (x >= 0)
         {
             if (dy & 1)
             {
-                set_pixel(round(px + x), round(py + y) + 1);
-                set_pixel(round(px - x), round(py + y) + 1);
-                set_pixel(round(px + x), round(py - y));
-                set_pixel(round(px - x), round(py - y));
+                putter(round(px + x), round(py + y) + 1);
+                putter(round(px - x), round(py + y) + 1);
+                putter(round(px + x), round(py - y));
+                putter(round(px - x), round(py - y));
             }
             else if (dx < 3)
             {
-                set_pixel(round(px + x), round(py + y) + 1);
-                set_pixel(round(px - x), round(py + y) + 1);
-                set_pixel(round(px + x), round(py - y) - 1);
-                set_pixel(round(px - x), round(py - y) - 1);
+                putter(round(px + x), round(py + y) + 1);
+                putter(round(px - x), round(py + y) + 1);
+                putter(round(px + x), round(py - y) - 1);
+                putter(round(px - x), round(py - y) - 1);
             }
             else
             {
-                set_pixel(round(px + x), round(py + y));
-                set_pixel(round(px - x), round(py + y));
-                set_pixel(round(px + x), round(py - y));
-                set_pixel(round(px - x), round(py - y));
+                putter(round(px + x), round(py + y));
+                putter(round(px - x), round(py + y));
+                putter(round(px + x), round(py - y));
+                putter(round(px - x), round(py - y));
             }
             if (F >= 0)
             {
@@ -786,29 +995,33 @@ namespace textcanvas
             {
                 if (!(dx & 1))
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y) + 1);
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y) + 1);
                 }
             }
             else
             {
                 if (dx & 1)
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y));
-                    set_pixel(round(px) - 1, round(py - y));
-                    set_pixel(round(px) - 1, round(py + y));
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y));
+                    putter(round(px) - 1, round(py - y));
+                    putter(round(px) - 1, round(py + y));
                 }
                 else
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y));
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y));
                 }
             }
             y += 1;
         }
+
+        m_pos.x = round(px);
+        m_pos.y = round(py);
     }
-    inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
     {
         if (x0 > x1)
             std::swap(x0, x1);
@@ -826,39 +1039,45 @@ namespace textcanvas
             {
                 for (coord_t x = x0; x <= x1; ++x)
                 {
-                    set_pixel(x, y);
+                    putter(x, y);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
         if (u < 1)
         {
             for (coord_t y = y0; y <= y1; ++y)
             {
-                set_pixel(x0, y);
+                putter(x0, y);
             }
             if (dx == 1)
             {
                 for (coord_t y = -dy / 4; y <= dy / 4; ++y)
                 {
-                    set_pixel(x0 + 1, py + y);
+                    putter(x0 + 1, py + y);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
         if (v < 1)
         {
             for (coord_t x = x0; x <= x1; ++x)
             {
-                set_pixel(x, y0);
+                putter(x, y0);
             }
             if (dy == 1)
             {
                 for (coord_t x = -dx / 4; x <= dx / 4; ++x)
                 {
-                    set_pixel(px + x, y0 + 1);
+                    putter(px + x, y0 + 1);
                 }
             }
+            m_pos.x = round(px);
+            m_pos.y = round(py);
             return;
         }
 
@@ -876,7 +1095,7 @@ namespace textcanvas
         {
             for (coord_t qx = round(px - x); qx <= round(px + x); ++qx)
             {
-                set_pixel(qx, round(py + y));
+                putter(qx, round(py + y));
             }
         }
 
@@ -886,24 +1105,24 @@ namespace textcanvas
             {
                 for (coord_t qx = round(px - x); qx <= round(px + x); ++qx)
                 {
-                    set_pixel(qx, round(py + y) + 1);
-                    set_pixel(qx, round(py - y));
+                    putter(qx, round(py + y) + 1);
+                    putter(qx, round(py - y));
                 }
             }
             else if (dx < 3)
             {
                 for (coord_t qx = round(px - x); qx <= round(px + x); ++qx)
                 {
-                    set_pixel(qx, round(py + y) + 1);
-                    set_pixel(qx, round(py - y) - 1);
+                    putter(qx, round(py + y) + 1);
+                    putter(qx, round(py - y) - 1);
                 }
             }
             else
             {
                 for (coord_t qx = round(px - x); qx <= round(px + x); ++qx)
                 {
-                    set_pixel(qx, round(py + y));
-                    set_pixel(qx, round(py - y));
+                    putter(qx, round(py + y));
+                    putter(qx, round(py - y));
                 }
             }
             if (F >= 0)
@@ -926,66 +1145,207 @@ namespace textcanvas
             {
                 if (!(dx & 1))
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y) + 1);
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y) + 1);
                 }
             }
             else
             {
                 if (dx & 1)
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y));
-                    set_pixel(round(px) - 1, round(py - y));
-                    set_pixel(round(px) - 1, round(py + y));
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y));
+                    putter(round(px) - 1, round(py - y));
+                    putter(round(px) - 1, round(py + y));
                 }
                 else
                 {
-                    set_pixel(round(px), round(py - y));
-                    set_pixel(round(px), round(py + y));
+                    putter(round(px), round(py - y));
+                    putter(round(px), round(py + y));
                 }
             }
             y += 1;
         }
+
+        m_pos.x = round(px);
+        m_pos.y = round(py);
     }
 
-    inline arc_area(TextCanvas& mask, float px, float py, coord_t x0, coord_t y0, coord_t x1, coord_t y1,
-                    float u, float v, float start_radian, float end_radian)
+    inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        for (coord_t y = y0; y <= y1; ++y)
+        SimplePutter putter(this);
+        ellipse(x0, y0, x1, y1, putter);
+    }
+    inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
+    {
+        SimplePutter putter(this);
+        fill_ellipse(x0, y0, x1, y1, putter);
+    }
+
+    template <typename T_PUTTER>
+    inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise, T_PUTTER& putter)
+    {
+        if (clockwise)
+            std::swap(start_radian, end_radian);
+
+        if (start_radian > end_radian)
+            return;
+
+        start_radian = normalize_radian(start_radian);
+        end_radian = normalize_radian(end_radian);
+
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t dx = x1 - x0, dy = y1 - y0;
+        float u = dx * 0.5, v = dy * 0.5;
+        coord_t u0 = coord_t(u), v0 = coord_t(v);
+        float px = x0 + u, py = y0 + v;
+
+        struct PUTTER
         {
-            for (coord_t x = x0; x <= x1; ++x)
+            T_PUTTER& putter;
+            float px, py, u, v;
+            float start_radian, end_radian;
+            PUTTER(T_PUTTER& putter_, float px_, float py_, float u_, float v_, float start_radian_, float end_radian_)
+                : putter(putter_)
             {
-                double at = atan2(y - py, x - px);  // [-pi, pi]
+                px = px_;
+                py = py_;
+                u = u_;
+                v = v_;
+                start_radian = start_radian_;
+                end_radian = end_radian_;
+            }
+            void operator()(coord_t x, coord_t y)
+            {
+                double at = atan2(u * (y - py), v * (x - px));
                 if (start_radian <= end_radian)
                 {
-                    if (start_radian <= at && at <= end_radian)
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
                     {
-                        mask.set_pixel(x, y);
-                        continue;
+                        putter(x, y);
                     }
                 }
                 else
                 {
-                    if ((start_radian <= at && at <= pi) ||
-                        (-pi <= at && at <= end_radian))
+                    if ((-pi <= at && at <= end_radian + epsilon) ||
+                        (start_radian - epsilon <= at && at <= pi))
                     {
-                        mask.set_pixel(x, y);
-                        continue;
+                        putter(x, y);
                     }
                 }
             }
-        }
-
-        coord_t qx = px + u * cos(start_radian);
-        coord_t qy = py + v * sin(start_radian);
-        mask.line(px, py, qx, qy);
-        coord_t rx = px + u * cos(end_radian);
-        coord_t ry = py + v * sin(end_radian);
-        mask.line(px, py, rx, ry);
+        } another_putter(putter, px, py, u, v, start_radian, end_radian);
+        ellipse(x0, y0, x1, y1, another_putter);
+    }
+    inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise)
+    {
+        SimplePutter putter(this);
+        arc(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
-    inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian)
+    template <typename T_PUTTER>
+    inline void TextCanvas::arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise, T_PUTTER& putter)
+    {
+        Point old_pos = pos();
+
+        if (clockwise)
+            std::swap(start_radian, end_radian);
+
+        if (start_radian > end_radian)
+            return;
+
+        start_radian = normalize_radian(start_radian);
+        end_radian = normalize_radian(end_radian);
+
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t dx = x1 - x0, dy = y1 - y0;
+        float u = dx * 0.5, v = dy * 0.5;
+        coord_t u0 = coord_t(u), v0 = coord_t(v);
+        float px = x0 + u, py = y0 + v;
+
+        struct PUTTER
+        {
+            T_PUTTER& putter;
+            float px, py, u, v;
+            float start_radian, end_radian;
+            float q_radian, qx, qy;
+            float r_radian, rx, ry;
+            PUTTER(T_PUTTER& putter_,
+                float px_, float py_, float u_, float v_,
+                float start_radian_, float end_radian_,
+                float q_radian_, float qx_, float qy_,
+                float r_radian_, float rx_, float ry_) : putter(putter_)
+            {
+                px = px_;
+                py = py_;
+                u = u_;
+                v = v_;
+                start_radian = start_radian_;
+                end_radian = end_radian_;
+                q_radian = q_radian_;
+                qx = qx_;
+                qy = qy_;
+                r_radian = r_radian_;
+                rx = rx_;
+                ry = ry_;
+            }
+            void operator()(coord_t x, coord_t y)
+            {
+                double at = atan2(v * (y - py), u * (x - px));
+                bool flag = false;
+                if (start_radian <= end_radian)
+                {
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    {
+                        flag = true;
+                    }
+                }
+                else
+                {
+                    if ((-pi <= at && at <= end_radian + epsilon) ||
+                        (start_radian - epsilon <= at && at <= pi))
+                    {
+                        flag = true;
+                    }
+                }
+                if (flag)
+                {
+                    putter(x, y);
+                    if (fabs(at - start_radian) < fabs(q_radian - start_radian))
+                    {
+                        q_radian = at;
+                        qx = x;
+                        qy = y;
+                    }
+                    if (fabs(at - end_radian) < fabs(r_radian - end_radian))
+                    {
+                        r_radian = at;
+                        rx = x;
+                        ry = y;
+                    }
+                }
+            }
+        } another_putter = { putter, px, py, u, v, start_radian, end_radian,
+                     100, px, py, -100, px, py};
+        ellipse(x0, y0, x1, y1, another_putter);
+        line(old_pos.x, old_pos.y, round(another_putter.qx), round(another_putter.qy), putter);
+    }
+    inline void TextCanvas::arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, bool clockwise)
+    {
+        SimplePutter putter(this);
+        arc_to(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
+    }
+
+    template <typename T_PUTTER>
+    void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter)
     {
         if (start_radian > end_radian)
             return;
@@ -1000,18 +1360,97 @@ namespace textcanvas
 
         coord_t dx = x1 - x0, dy = y1 - y0;
         float u = dx * 0.5, v = dy * 0.5;
+        coord_t u0 = coord_t(u), v0 = coord_t(v);
         float px = x0 + u, py = y0 + v;
 
-        TextCanvas mask(width(), height(), 0);
-        arc_area(mask, px, py, x0, y0, x1, y1, u, v, start_radian, end_radian);
+        struct PUTTER
+        {
+            T_PUTTER& putter;
+            float px, py, u, v;
+            float start_radian, end_radian;
+            float q_radian, qx, qy;
+            float r_radian, rx, ry;
+            PUTTER(T_PUTTER& putter_,
+                float px_, float py_, float u_, float v_,
+                float start_radian_, float end_radian_,
+                float q_radian_, float qx_, float qy_,
+                float r_radian_, float rx_, float ry_) : putter(putter_)
+            {
+                px = px_;
+                py = py_;
+                u = u_;
+                v = v_;
+                start_radian = start_radian_;
+                end_radian = end_radian_;
+                q_radian = q_radian_;
+                qx = qx_;
+                qy = qy_;
+                r_radian = r_radian_;
+                rx = rx_;
+                ry = ry_;
+            }
+            bool check(double& at, coord_t x, coord_t y)
+            {
+                at = atan2(v * (y - py), u * (x - px));
+                bool flag = false;
+                if (start_radian <= end_radian)
+                {
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    {
+                        flag = true;
+                    }
+                }
+                else
+                {
+                    if ((-pi <= at && at <= end_radian + epsilon) ||
+                        (start_radian - epsilon <= at && at <= pi))
+                    {
+                        flag = true;
+                    }
+                }
+                return flag;
+            }
+            void operator()(coord_t x, coord_t y)
+            {
+                double at;
+                if (check(at, x, y))
+                {
+                    putter(x, y);
+                    update(at, x, y);
+                }
+            }
+            void update(double at, coord_t x, coord_t y)
+            {
+                if (fabs(at - start_radian) < fabs(q_radian - start_radian))
+                {
+                    q_radian = at;
+                    qx = x;
+                    qy = y;
+                }
+                if (fabs(at - end_radian) < fabs(r_radian - end_radian))
+                {
+                    r_radian = at;
+                    rx = x;
+                    ry = y;
+                }
+            }
+        } another_putter(putter, px, py, u, v, start_radian, end_radian,
+                         100, px, py, -100, px, py);
+        ellipse(x0, y0, x1, y1, another_putter);
 
-        TextCanvas image(*this);
-        image.ellipse(x0, y0, x1, y1);
-
-        do_mask(image, mask);
+        line(px, py, round(another_putter.qx), round(another_putter.qy), putter);
+        line(px, py, round(another_putter.rx), round(another_putter.ry), putter);
     }
+
     inline void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian)
     {
+        SimplePutter putter(this);
+        pie(x0, y0, x1, y1, start_radian, end_radian, putter);
+    }
+
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian, T_PUTTER& putter)
+    {
         if (start_radian > end_radian)
             return;
 
@@ -1025,48 +1464,55 @@ namespace textcanvas
 
         coord_t dx = x1 - x0, dy = y1 - y0;
         float u = dx * 0.5, v = dy * 0.5;
+        coord_t u0 = coord_t(u), v0 = coord_t(v);
         float px = x0 + u, py = y0 + v;
 
-        TextCanvas mask(width(), height(), 0);
-        arc_area(mask, px, py, x0, y0, x1, y1, u, v, start_radian, end_radian);
-
-        TextCanvas image(*this);
-        image.ellipse(x0, y0, x1, y1);
-
-        coord_t qx = px + u * cos(start_radian);
-        coord_t qy = py + v * sin(start_radian);
-        image.line(px, py, qx, qy);
-        coord_t rx = px + u * cos(end_radian);
-        coord_t ry = py + v * sin(end_radian);
-        image.line(px, py, rx, ry);
-
-        do_mask(image, mask);
+        struct PUTTER
+        {
+            T_PUTTER& putter;
+            float px, py, u, v;
+            float start_radian, end_radian;
+            PUTTER(T_PUTTER& putter_,
+                float px_, float py_, float u_, float v_,
+                float start_radian_, float end_radian_) : putter(putter_)
+            {
+                px = px_;
+                py = py_;
+                u = u_;
+                v = v_;
+                start_radian = start_radian_;
+                end_radian = end_radian_;
+            }
+            void operator()(coord_t x, coord_t y)
+            {
+                double at = atan2(v * (y - py), u * (x - px));
+                bool flag = false;
+                if (start_radian <= end_radian)
+                {
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    {
+                        flag = true;
+                    }
+                }
+                else
+                {
+                    if ((-pi <= at && at <= end_radian + epsilon) ||
+                        (start_radian - epsilon <= at && at <= pi))
+                    {
+                        flag = true;
+                    }
+                }
+                if (flag)
+                    putter(x, y);
+            }
+        } another_putter(putter, px, py, u, v, start_radian, end_radian);
+        fill_ellipse(x0, y0, x1, y1, another_putter);
+        putter(px, py);
     }
     inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, float start_radian, float end_radian)
     {
-        if (start_radian > end_radian)
-            return;
-
-        start_radian = normalize_radian(start_radian);
-        end_radian = normalize_radian(end_radian);
-
-        if (x0 > x1)
-            std::swap(x0, x1);
-        if (y0 > y1)
-            std::swap(y0, y1);
-
-        coord_t dx = x1 - x0, dy = y1 - y0;
-        float u = dx * 0.5, v = dy * 0.5;
-        float px = x0 + u, py = y0 + v;
-
-        TextCanvas mask(width(), height(), 0);
-        arc_area(mask, px, py, x0, y0, x1, y1, u, v, start_radian, end_radian);
-
-        TextCanvas image(*this);
-        image.fill_ellipse(x0, y0, x1, y1);
-        image.ellipse(x0, y0, x1, y1);
-
-        do_mask(image, mask);
+        SimplePutter putter(this);
+        fill_pie(x0, y0, x1, y1, start_radian, end_radian, putter);
     }
 
     inline void TextCanvas::ellipse(Point p0, Point p1)
@@ -1077,9 +1523,13 @@ namespace textcanvas
     {
         fill_ellipse(p0.x, p0.y, p1.x, p1.y);
     }
-    inline void TextCanvas::arc(Point p0, Point p1, float start_radian, float end_radian)
+    inline void TextCanvas::arc(Point p0, Point p1, float start_radian, float end_radian, bool clockwise)
     {
-        arc(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian);
+        arc(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
+    }
+    inline void TextCanvas::arc_to(Point p0, Point p1, float start_radian, float end_radian, bool clockwise)
+    {
+        arc_to(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
     }
     inline void TextCanvas::pie(Point p0, Point p1, float start_radian, float end_radian)
     {
@@ -1090,55 +1540,76 @@ namespace textcanvas
         fill_pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian);
     }
 
+    template <typename T_PUTTER>
+    inline void TextCanvas::round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter)
+    {
+        Point old_pos = pos();
+
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t dx = x1 - x0, dy = y1 - y0;
+        if (dx <= 2 * rx)
+            rx = dx / 2;
+        if (dy <= 2 * ry)
+            ry = dy / 2;
+
+        line(x0 + rx, y0, x1 - rx, y0, putter);
+        arc(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0, false, putter);
+        line(x1, y0 + ry, x1, y1 - ry, putter);
+        arc(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2, false, putter);
+        line(x1 - rx, y1, x0 + rx, y1, putter);
+        arc(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi, false, putter);
+        line(x0, y1 - ry, x0, y0 + ry, putter);
+        arc(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2, false, putter);
+
+        pos() = old_pos;
+    }
     inline void TextCanvas::round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry)
     {
-        if (x0 > x1)
-            std::swap(x0, x1);
-        if (y0 > y1)
-            std::swap(y0, y1);
-
-        coord_t dx = x1 - x0, dy = y1 - y0;
-        if (dx <= 2 * rx)
-            rx = dx / 2;
-        if (dy <= 2 * ry)
-            ry = dy / 2;
-
-        line(x0 + rx, y0, x1 - rx, y0);
-        arc(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0);
-        line(x1, y0 + ry, x1, y1 - ry);
-        arc(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2);
-        line(x1 - rx, y1, x0 + rx, y1);
-        arc(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi);
-        line(x0, y1 - ry, x0, y0 + ry);
-        arc(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2);
-    }
-    inline void TextCanvas::fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry)
-    {
-        if (x0 > x1)
-            std::swap(x0, x1);
-        if (y0 > y1)
-            std::swap(y0, y1);
-
-        coord_t dx = x1 - x0, dy = y1 - y0;
-        if (dx <= 2 * rx)
-            rx = dx / 2;
-        if (dy <= 2 * ry)
-            ry = dy / 2;
-
-        fill_rectangle(x0 + rx, y0, x1 - rx, y0 + ry);
-        fill_pie(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0);
-        fill_rectangle(x1 - rx, y0 + ry, x1, y1 - ry);
-        fill_pie(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2);
-        fill_rectangle(x1 - rx, y1 - ry, x0 + rx, y1);
-        fill_pie(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi);
-        fill_rectangle(x0, y1 - ry, x0 + rx, y0 + ry);
-        fill_pie(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2);
-
-        fill_rectangle(x0 + rx, y0 + ry, x1 - rx, y1 - ry);
+        SimplePutter putter(this);
+        round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
     inline void TextCanvas::round_rect(Point p0, Point p1, coord_t rx, coord_t ry)
     {
         round_rect(p0.x, p0.y, p1.x, p1.y, rx, ry);
+    }
+
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter)
+    {
+        Point old_pos = pos();
+
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t dx = x1 - x0, dy = y1 - y0;
+        if (dx <= 2 * rx)
+            rx = dx / 2;
+        if (dy <= 2 * ry)
+            ry = dy / 2;
+
+        fill_rectangle(x0 + rx, y0, x1 - rx, y0 + ry, putter);
+        fill_pie(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0, putter);
+        fill_rectangle(x1 - rx, y0 + ry, x1, y1 - ry, putter);
+        fill_pie(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2, putter);
+        fill_rectangle(x1 - rx, y1 - ry, x0 + rx, y1, putter);
+        fill_pie(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi, putter);
+        fill_rectangle(x0, y1 - ry, x0 + rx, y0 + ry, putter);
+        fill_pie(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2, putter);
+
+        fill_rectangle(x0 + rx, y0 + ry, x1 - rx, y1 - ry, putter);
+
+        pos() = old_pos;
+    }
+    inline void TextCanvas::fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry)
+    {
+        SimplePutter putter(this);
+        fill_round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
     inline void TextCanvas::fill_round_rect(Point p0, Point p1, coord_t rx, coord_t ry)
     {
@@ -1147,22 +1618,32 @@ namespace textcanvas
 
     inline void TextCanvas::lines(size_t num_points, const Point *points)
     {
-        for (size_t i = 0; i < num_points; i += 2)
+        for (size_t i = 0; i < num_points / 2; ++i)
         {
-            line(points[i], points[i + 1]);
+            line(points[2 * i], points[2 * i + 1]);
         }
     }
     inline void TextCanvas::lines(const Points& points)
     {
         lines(points.size(), &points[0]);
     }
+    template <typename T_PUTTER>
+    void lines(size_t num_points, const Point *points, T_PUTTER& putter)
+    {
+        for (size_t i = 0; i < num_points / 2; ++i)
+        {
+            line(points[2 * i], points[2 * i + 1], putter);
+        }
+    }
+
     inline void TextCanvas::polyline(size_t num_points, const Point *points)
     {
         if (num_points > 0)
         {
-            for (size_t i = 0; i < num_points - 1; ++i)
+            move_to(points[0]);
+            for (size_t i = 1; i < num_points; ++i)
             {
-                line(points[i], points[i + 1]);
+                line_to(points[i]);
             }
         }
     }
@@ -1170,23 +1651,44 @@ namespace textcanvas
     {
         polyline(points.size(), &points[0]);
     }
-    inline void TextCanvas::polygon(size_t num_points, const Point *points)
+    template <typename T_PUTTER>
+    inline void TextCanvas::polyline(size_t num_points, const Point *points, T_PUTTER& putter)
     {
         if (num_points > 0)
         {
-            for (size_t i = 0; i < num_points - 1; ++i)
+            move_to(points[0]);
+            for (size_t i = 1; i < num_points; ++i)
             {
-                line(points[i], points[i + 1]);
+                line_to(points[i], putter);
             }
-            line(points[num_points - 1], points[0]);
         }
+    }
+
+    inline void TextCanvas::polygon(size_t num_points, const Point *points)
+    {
+        SimplePutter putter(this);
+        polygon(num_points, points, putter);
     }
     inline void TextCanvas::polygon(const Points& points)
     {
         polygon(points.size(), &points[0]);
     }
+    template <typename T_PUTTER>
+    inline void TextCanvas::polygon(size_t num_points, const Point *points, T_PUTTER& putter)
+    {
+        if (num_points > 0)
+        {
+            move_to(points[0]);
+            for (size_t i = 1; i < num_points; ++i)
+            {
+                line_to(points[i], putter);
+            }
+            line_to(points[0], putter);
+        }
+    }
 
-    inline void TextCanvas::fill_polygon_alternate(const Points& points)
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_polygon_alternate(const Points& points, T_PUTTER& putter)
     {
         Point p0, p1;
         if (get_polygon_box(p0, p1, points.size(), &points[0]))
@@ -1200,13 +1702,15 @@ namespace textcanvas
                 {
                     if (crossing_number(Point(x, y), new_points) & 1)
                     {
-                        set_pixel(x, y);
+                        putter(x, y);
                     }
                 }
             }
+            m_pos = points[0];
         }
     }
-    inline void TextCanvas::fill_polygon_winding(const Points& points)
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_polygon_winding(const Points& points, T_PUTTER& putter)
     {
         Point p0, p1;
         if (get_polygon_box(p0, p1, points.size(), &points[0]))
@@ -1220,14 +1724,16 @@ namespace textcanvas
                 {
                     if (winding_number(Point(x, y), new_points))
                     {
-                        set_pixel(x, y);
+                        putter(x, y);
                     }
                 }
             }
+            m_pos = points[0];
         }
     }
 
-    inline void TextCanvas::fill_polygon_alternate(size_t num_points, const Point *points)
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_polygon_alternate(size_t num_points, const Point *points, T_PUTTER& putter)
     {
         Point p0, p1;
         if (get_polygon_box(p0, p1, num_points, points))
@@ -1241,13 +1747,15 @@ namespace textcanvas
                 {
                     if (crossing_number(Point(x, y), new_points) & 1)
                     {
-                        set_pixel(x, y);
+                        putter(x, y);
                     }
                 }
             }
+            m_pos = points[0];
         }
     }
-    inline void TextCanvas::fill_polygon_winding(size_t num_points, const Point *points)
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_polygon_winding(size_t num_points, const Point *points, T_PUTTER& putter)
     {
         Point p0, p1;
         if (get_polygon_box(p0, p1, num_points, points))
@@ -1261,27 +1769,37 @@ namespace textcanvas
                 {
                     if (winding_number(Point(x, y), new_points))
                     {
-                        set_pixel(x, y);
+                        putter(x, y);
                     }
                 }
             }
+            m_pos = points[0];
         }
     }
 
     inline void TextCanvas::fill_polygon(size_t num_points, const Point *points, bool alternate)
     {
+        SimplePutter putter(this);
         if (alternate)
-            fill_polygon_alternate(num_points, points);
+            fill_polygon_alternate(num_points, points, putter);
         else
-            fill_polygon_winding(num_points, points);
+            fill_polygon_winding(num_points, points, putter);
     }
-
     inline void TextCanvas::fill_polygon(const Points& points, bool alternate)
     {
+        SimplePutter putter(this);
         if (alternate)
-            fill_polygon_alternate(points);
+            fill_polygon_alternate(points, putter);
         else
-            fill_polygon_winding(points);
+            fill_polygon_winding(points, putter);
+    }
+    template <typename T_PUTTER>
+    inline void TextCanvas::fill_polygon(size_t num_points, const Point *points, bool alternate, T_PUTTER& putter)
+    {
+        if (alternate)
+            fill_polygon_alternate(num_points, points, putter);
+        else
+            fill_polygon_winding(num_points, points, putter);
     }
 } // namespace textcanvas
 
