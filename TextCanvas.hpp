@@ -1,4 +1,4 @@
-// TextCanvas.hpp
+// TextCanvas.hpp --- TextCanvas by katahiromz
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
@@ -13,7 +13,6 @@
 #include <algorithm>    // for std::swap
 #include <cmath>        // for std::sqrt
 #include <cassert>      // for assert macro
-#include <iostream>     // for std::cout, std::endl, ...
 
 ///////////////////////////////////////////////////////////////////////////
 
