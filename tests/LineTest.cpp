@@ -9,6 +9,7 @@ int main(void)
     {
         canvas.color('0' + k % 10);
         canvas.line(i, 100, 100, (100 - i));
+        canvas.line(0, (100 - i), i, 0);
         ++k;
     }
     std::cout << canvas.to_str();
