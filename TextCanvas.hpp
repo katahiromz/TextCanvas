@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    2   // Version 2
+#define TEXT_CANVAS_HPP_    3   // Version 3
 
 #if _MSC_VER > 1000
     #pragma once
@@ -30,7 +30,7 @@ namespace textcanvas
 #else
     static const double pi = 3.1415926535;
 #endif
-    static const double epsilon = 0.001;
+    static const double epsilon = 0.0001;
 
     static const color_t zero = color_t(0);
     static const color_t one = color_t(1);
@@ -134,10 +134,6 @@ namespace textcanvas
         void put_pixel(Point p, color_t ch);
         void put_pixel(coord_t x, coord_t y);
         void put_pixel(Point p);
-        void put_pixel_unsafe(coord_t x, coord_t y, color_t ch);
-        void put_pixel_unsafe(Point p, color_t ch);
-        void put_pixel_unsafe(coord_t x, coord_t y);
-        void put_pixel_unsafe(Point p);
 
         color_t color() const;
         void color(color_t ch);
@@ -263,19 +259,48 @@ namespace textcanvas
         void fill_polygon_winding(size_t num_points, const Point *points, T_PUTTER& putter);
         template <typename T_PUTTER>
         void fill_polygon_winding(const Points& points, T_PUTTER& putter);
+    };
 
-    protected:
-        struct SimplePutter
+    ///////////////////////////////////////////////////////////////////////////
+    // pixel putters
+
+    struct SimplePutter
+    {
+        TextCanvas *m_tc;
+        SimplePutter(TextCanvas *tc) : m_tc(tc)
         {
-            TextCanvas *m_tc;
-            SimplePutter(TextCanvas *tc) : m_tc(tc)
-            {
-            }
-            void operator()(coord_t x, coord_t y)
-            {
-                m_tc->put_pixel(x, y);
-            }
-        };
+        }
+        void operator()(coord_t x, coord_t y)
+        {
+            m_tc->put_pixel(x, y);
+        }
+    };
+    struct XorPutter
+    {
+        TextCanvas *m_tc;
+        XorPutter(TextCanvas *tc) : m_tc(tc)
+        {
+        }
+        void operator()(coord_t x, coord_t y)
+        {
+            color_t c = m_tc->get_pixel(x, y);
+            m_tc->put_pixel(x, y, c ^ m_tc->color());
+        }
+    };
+    struct WidenPutter
+    {
+        TextCanvas *m_tc;
+        WidenPutter(TextCanvas *tc) : m_tc(tc)
+        {
+        }
+        void operator()(coord_t x, coord_t y)
+        {
+            m_tc->put_pixel(x, y);
+            m_tc->put_pixel(x - 1, y);
+            m_tc->put_pixel(x + 1, y);
+            m_tc->put_pixel(x, y - 1);
+            m_tc->put_pixel(x, y + 1);
+        }
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -485,22 +510,6 @@ namespace textcanvas
     inline void TextCanvas::put_pixel(Point p)
     {
         put_pixel(p, m_ch);
-    }
-    inline void TextCanvas::put_pixel_unsafe(coord_t x, coord_t y, color_t ch)
-    {
-        m_text[y * m_width + x] = ch;
-    }
-    inline void TextCanvas::put_pixel_unsafe(Point p, color_t ch)
-    {
-        put_pixel_unsafe(p.x, p.y, ch);
-    }
-    inline void TextCanvas::put_pixel_unsafe(coord_t x, coord_t y)
-    {
-        put_pixel_unsafe(x, y, m_ch);
-    }
-    inline void TextCanvas::put_pixel_unsafe(Point p)
-    {
-        put_pixel_unsafe(p.x, p.y);
     }
 
     inline color_t TextCanvas::color() const

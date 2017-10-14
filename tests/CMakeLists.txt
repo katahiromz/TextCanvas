@@ -1,3 +1,5 @@
+include_directories(..)
+
 add_executable(ArcTest ArcTest.cpp)
 add_executable(CircleTest CircleTest.cpp)
 add_executable(EllipseTest EllipseTest.cpp)
