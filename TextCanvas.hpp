@@ -637,9 +637,6 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
     {
-        coord_t x1 = x0 + image.width() * x_zoom;
-        coord_t y1 = y0 + image.height() * y_zoom;
-
         coord_t y = 0;
         for (coord_t py = 0; py < image.height(); ++py)
         {
