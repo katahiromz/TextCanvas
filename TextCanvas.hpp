@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    5   // Version 5
+#define TEXT_CANVAS_HPP_    6   // Version 6
 
 #if _MSC_VER > 1000
     #pragma once
@@ -1379,14 +1379,14 @@ namespace textcanvas
                     if (fabs(at - start_radian) < fabs(q_radian - start_radian))
                     {
                         q_radian = at;
-                        qx = x;
-                        qy = y;
+                        qx = double(x);
+                        qy = double(y);
                     }
                     if (fabs(at - end_radian) < fabs(r_radian - end_radian))
                     {
                         r_radian = at;
-                        rx = x;
-                        ry = y;
+                        rx = double(x);
+                        ry = double(y);
                     }
                 }
             }
@@ -1486,14 +1486,14 @@ namespace textcanvas
                 if (fabs(at - start_radian) < fabs(q_radian - start_radian))
                 {
                     q_radian = at;
-                    qx = x;
-                    qy = y;
+                    qx = double(x);
+                    qy = double(y);
                 }
                 if (fabs(at - end_radian) < fabs(r_radian - end_radian))
                 {
                     r_radian = at;
-                    rx = x;
-                    ry = y;
+                    rx = double(x);
+                    ry = double(y);
                 }
             }
         } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise,
