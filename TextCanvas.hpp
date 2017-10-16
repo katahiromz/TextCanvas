@@ -80,7 +80,7 @@ namespace textcanvas
     size_t crossing_number(Point p, const Points& points);
     coord_t winding_number(Point p, const Points& points);
 
-    bool check_range(double at, bool whole_range, bool clockwise, double a0, double a1);
+    bool check_range(double at, bool clockwise, double a0, double a1);
 
     ///////////////////////////////////////////////////////////////////////////
     // TextCanvas
@@ -308,11 +308,8 @@ namespace textcanvas
         return radian;
     }
 
-    inline bool check_range(double at, bool whole_range, bool clockwise, double a0, double a1)
+    inline bool check_range(double at, bool clockwise, double a0, double a1)
     {
-        if (whole_range)
-            return true;
-
         if (clockwise)
         {
             if ((-pi <= at && at <= a0 + epsilon) ||
@@ -1270,7 +1267,7 @@ namespace textcanvas
             bool check(double& at, coord_t x, coord_t y) const
             {
                 at = atan2(-u * (y - py), v * (x - px));
-                return check_range(at, whole_range, clockwise, start_radian, end_radian);
+                return whole_range || check_range(at, clockwise, start_radian, end_radian);
             }
             void operator()(coord_t x, coord_t y)
             {
@@ -1337,7 +1334,7 @@ namespace textcanvas
             bool check(double& at, coord_t x, coord_t y) const
             {
                 at = atan2(-u * (y - py), v * (x - px));
-                return check_range(at, whole_range, clockwise, start_radian, end_radian);
+                return whole_range || check_range(at, clockwise, start_radian, end_radian);
             }
             void operator()(coord_t x, coord_t y)
             {
@@ -1421,7 +1418,7 @@ namespace textcanvas
             bool check(double& at, coord_t x, coord_t y) const
             {
                 at = atan2(-u * (y - py), v * (x - px));
-                return check_range(at, whole_range, clockwise, start_radian, end_radian);
+                return whole_range || check_range(at, clockwise, start_radian, end_radian);
             }
             void operator()(coord_t x, coord_t y)
             {
@@ -1501,7 +1498,7 @@ namespace textcanvas
             bool check(double& at, coord_t x, coord_t y) const
             {
                 at = atan2(-u * (y - py), v * (x - px));
-                return check_range(at, whole_range, clockwise, start_radian, end_radian);
+                return whole_range || check_range(at, clockwise, start_radian, end_radian);
             }
             void operator()(coord_t x, coord_t y)
             {
