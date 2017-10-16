@@ -27,9 +27,9 @@ namespace textcanvas
 #ifdef M_PI
     static const double pi = M_PI;
 #else
-    static const double pi = 3.1415926535;
+    static const double pi = 3.14159265358979323846;
 #endif
-    static const double epsilon = 0.0001;
+    static const double epsilon = 0.00001;
 
     static const color_t zero = color_t(0);
     static const color_t one = color_t(1);
