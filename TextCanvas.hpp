@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    8   // Version 8
+#define TEXT_CANVAS_HPP_    9   // Version 9
 
 #if _MSC_VER > 1000
     #pragma once
@@ -1722,46 +1722,12 @@ namespace textcanvas
     template <typename T_PUTTER>
     inline void TextCanvas::fill_polygon_alternate(const Points& points, T_PUTTER& putter)
     {
-        Point p0, p1;
-        if (get_polygon_box(p0, p1, points.size(), &points[0]))
-        {
-            Points new_points = points;
-            new_points.push_back(points[0]);
-
-            for (coord_t y = p0.y; y <= p1.y; ++y)
-            {
-                for (coord_t x = p0.x; x <= p1.x; ++x)
-                {
-                    if (crossing_number(Point(x, y), new_points) & 1)
-                    {
-                        putter(x, y);
-                    }
-                }
-            }
-            m_pos = points[0];
-        }
+        fill_polygon_alternate(points.size(), &points[0], putter);
     }
     template <typename T_PUTTER>
     inline void TextCanvas::fill_polygon_winding(const Points& points, T_PUTTER& putter)
     {
-        Point p0, p1;
-        if (get_polygon_box(p0, p1, points.size(), &points[0]))
-        {
-            Points new_points = points;
-            new_points.push_back(points[0]);
-
-            for (coord_t y = p0.y; y <= p1.y; ++y)
-            {
-                for (coord_t x = p0.x; x <= p1.x; ++x)
-                {
-                    if (winding_number(Point(x, y), new_points))
-                    {
-                        putter(x, y);
-                    }
-                }
-            }
-            m_pos = points[0];
-        }
+        fill_polygon_winding(points.size(), &points[0], putter);
     }
 
     template <typename T_PUTTER>
@@ -1783,6 +1749,7 @@ namespace textcanvas
                     }
                 }
             }
+            polyline(new_points);
             m_pos = points[0];
         }
     }
@@ -1805,6 +1772,7 @@ namespace textcanvas
                     }
                 }
             }
+            polyline(new_points);
             m_pos = points[0];
         }
     }
