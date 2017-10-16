@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    9   // Version 9
+#define TEXT_CANVAS_HPP_    10  // Version 10
 
 #if _MSC_VER > 1000
     #pragma once
@@ -62,7 +62,7 @@ namespace textcanvas
     ///////////////////////////////////////////////////////////////////////////
     // functions
 
-    inline coord_t my_round(double d)
+    inline coord_t do_round(double d)
     {
         return coord_t(d + 0.5);
     }
@@ -963,7 +963,7 @@ namespace textcanvas
         coord_t u0 = coord_t(u), v0 = coord_t(v);
         double px = x0 + u, py = y0 + v;
 
-        if (dx <= 1 && dy <= 1)
+        if (dx <= 1 || dy <= 1)
         {
             for (coord_t y = y0; y <= y1; ++y)
             {
@@ -972,8 +972,8 @@ namespace textcanvas
                     putter(x, y);
                 }
             }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
         if (u < 1)
@@ -982,15 +982,8 @@ namespace textcanvas
             {
                 putter(x0, y);
             }
-            if (dx == 1)
-            {
-                for (coord_t y = -dy / 4; y <= dy / 4; ++y)
-                {
-                    putter(x0 + 1, coord_t(py + y));
-                }
-            }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
         if (v < 1)
@@ -999,15 +992,8 @@ namespace textcanvas
             {
                 putter(x, y0);
             }
-            if (dy == 1)
-            {
-                for (coord_t x = -dx / 4; x <= dx / 4; ++x)
-                {
-                    putter(coord_t(px + x), y0 + 1);
-                }
-            }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
 
@@ -1023,32 +1009,32 @@ namespace textcanvas
 
         if (!(dy & 1) && dx < 3)
         {
-            putter(coord_t(px + x), my_round(py + y));
-            putter(coord_t(px - x), my_round(py + y));
+            putter(coord_t(px + x), do_round(py + y));
+            putter(coord_t(px - x), do_round(py + y));
         }
 
         while (x >= 0)
         {
             if (dy & 1)
             {
-                putter(my_round(px + x), my_round(py + y) + 1);
-                putter(my_round(px - x), my_round(py + y) + 1);
-                putter(my_round(px + x), my_round(py - y));
-                putter(my_round(px - x), my_round(py - y));
+                putter(do_round(px + x), do_round(py + y) + 1);
+                putter(do_round(px - x), do_round(py + y) + 1);
+                putter(do_round(px + x), do_round(py - y));
+                putter(do_round(px - x), do_round(py - y));
             }
             else if (dx < 3)
             {
-                putter(my_round(px + x), my_round(py + y) + 1);
-                putter(my_round(px - x), my_round(py + y) + 1);
-                putter(my_round(px + x), my_round(py - y) - 1);
-                putter(my_round(px - x), my_round(py - y) - 1);
+                putter(do_round(px + x), do_round(py + y) + 1);
+                putter(do_round(px - x), do_round(py + y) + 1);
+                putter(do_round(px + x), do_round(py - y) - 1);
+                putter(do_round(px - x), do_round(py - y) - 1);
             }
             else
             {
-                putter(my_round(px + x), my_round(py + y));
-                putter(my_round(px - x), my_round(py + y));
-                putter(my_round(px + x), my_round(py - y));
-                putter(my_round(px - x), my_round(py - y));
+                putter(do_round(px + x), do_round(py + y));
+                putter(do_round(px - x), do_round(py + y));
+                putter(do_round(px + x), do_round(py - y));
+                putter(do_round(px - x), do_round(py - y));
             }
             if (F >= 0)
             {
@@ -1070,30 +1056,30 @@ namespace textcanvas
             {
                 if (!(dx & 1))
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y) + 1);
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y) + 1);
                 }
             }
             else
             {
                 if (dx & 1)
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y));
-                    putter(my_round(px) - 1, my_round(py - y));
-                    putter(my_round(px) - 1, my_round(py + y));
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y));
+                    putter(do_round(px) - 1, do_round(py - y));
+                    putter(do_round(px) - 1, do_round(py + y));
                 }
                 else
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y));
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y));
                 }
             }
             y += 1;
         }
 
-        m_pos.x = my_round(px);
-        m_pos.y = my_round(py);
+        m_pos.x = do_round(px);
+        m_pos.y = do_round(py);
     }
     template <typename T_PUTTER>
     inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
@@ -1108,7 +1094,7 @@ namespace textcanvas
         coord_t u0 = coord_t(u), v0 = coord_t(v);
         double px = x0 + u, py = y0 + v;
 
-        if (dx <= 1 && dy <= 1)
+        if (dx <= 1 || dy <= 1)
         {
             for (coord_t y = y0; y <= y1; ++y)
             {
@@ -1117,8 +1103,8 @@ namespace textcanvas
                     putter(x, y);
                 }
             }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
         if (u < 1)
@@ -1127,15 +1113,8 @@ namespace textcanvas
             {
                 putter(x0, y);
             }
-            if (dx == 1)
-            {
-                for (coord_t y = -dy / 4; y <= dy / 4; ++y)
-                {
-                    putter(x0 + 1, coord_t(py + y));
-                }
-            }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
         if (v < 1)
@@ -1144,15 +1123,8 @@ namespace textcanvas
             {
                 putter(x, y0);
             }
-            if (dy == 1)
-            {
-                for (coord_t x = -dx / 4; x <= dx / 4; ++x)
-                {
-                    putter(coord_t(px + x), y0 + 1);
-                }
-            }
-            m_pos.x = my_round(px);
-            m_pos.y = my_round(py);
+            m_pos.x = do_round(px);
+            m_pos.y = do_round(py);
             return;
         }
 
@@ -1168,9 +1140,9 @@ namespace textcanvas
 
         if (!(dy & 1) && dx < 3)
         {
-            for (coord_t qx = my_round(px - x); qx <= my_round(px + x); ++qx)
+            for (coord_t qx = do_round(px - x); qx <= do_round(px + x); ++qx)
             {
-                putter(qx, my_round(py + y));
+                putter(qx, do_round(py + y));
             }
         }
 
@@ -1178,26 +1150,26 @@ namespace textcanvas
         {
             if (dy & 1)
             {
-                for (coord_t qx = my_round(px - x); qx <= my_round(px + x); ++qx)
+                for (coord_t qx = do_round(px - x); qx <= do_round(px + x); ++qx)
                 {
-                    putter(qx, my_round(py + y) + 1);
-                    putter(qx, my_round(py - y));
+                    putter(qx, do_round(py + y) + 1);
+                    putter(qx, do_round(py - y));
                 }
             }
             else if (dx < 3)
             {
-                for (coord_t qx = my_round(px - x); qx <= my_round(px + x); ++qx)
+                for (coord_t qx = do_round(px - x); qx <= do_round(px + x); ++qx)
                 {
-                    putter(qx, my_round(py + y) + 1);
-                    putter(qx, my_round(py - y) - 1);
+                    putter(qx, do_round(py + y) + 1);
+                    putter(qx, do_round(py - y) - 1);
                 }
             }
             else
             {
-                for (coord_t qx = my_round(px - x); qx <= my_round(px + x); ++qx)
+                for (coord_t qx = do_round(px - x); qx <= do_round(px + x); ++qx)
                 {
-                    putter(qx, my_round(py + y));
-                    putter(qx, my_round(py - y));
+                    putter(qx, do_round(py + y));
+                    putter(qx, do_round(py - y));
                 }
             }
             if (F >= 0)
@@ -1220,30 +1192,30 @@ namespace textcanvas
             {
                 if (!(dx & 1))
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y) + 1);
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y) + 1);
                 }
             }
             else
             {
                 if (dx & 1)
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y));
-                    putter(my_round(px) - 1, my_round(py - y));
-                    putter(my_round(px) - 1, my_round(py + y));
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y));
+                    putter(do_round(px) - 1, do_round(py - y));
+                    putter(do_round(px) - 1, do_round(py + y));
                 }
                 else
                 {
-                    putter(my_round(px), my_round(py - y));
-                    putter(my_round(px), my_round(py + y));
+                    putter(do_round(px), do_round(py - y));
+                    putter(do_round(px), do_round(py + y));
                 }
             }
             y += 1;
         }
 
-        m_pos.x = my_round(px);
-        m_pos.y = my_round(py);
+        m_pos.x = do_round(px);
+        m_pos.y = do_round(py);
     }
 
     inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
@@ -1392,7 +1364,7 @@ namespace textcanvas
         } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise,
                          whole_range, 100, px, py, -100, px, py);
         ellipse(x0, y0, x1, y1, another_putter);
-        line(old_pos.x, old_pos.y, my_round(another_putter.qx), my_round(another_putter.qy), putter);
+        line(old_pos.x, old_pos.y, do_round(another_putter.qx), do_round(another_putter.qy), putter);
     }
     inline void TextCanvas::arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
     {
@@ -1477,8 +1449,8 @@ namespace textcanvas
                          whole_range, 100, px, py, -100, px, py);
         ellipse(x0, y0, x1, y1, another_putter);
 
-        line(coord_t(px), coord_t(py), my_round(another_putter.qx), my_round(another_putter.qy), putter);
-        line(coord_t(px), coord_t(py), my_round(another_putter.rx), my_round(another_putter.ry), putter);
+        line(coord_t(px), coord_t(py), do_round(another_putter.qx), do_round(another_putter.qy), putter);
+        line(coord_t(px), coord_t(py), do_round(another_putter.rx), do_round(another_putter.ry), putter);
     }
 
     inline void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian)
@@ -1749,7 +1721,7 @@ namespace textcanvas
                     }
                 }
             }
-            polyline(new_points);
+            polyline(num_points + 1, &new_points[0], putter);
         }
     }
     template <typename T_PUTTER>
@@ -1771,7 +1743,7 @@ namespace textcanvas
                     }
                 }
             }
-            polyline(new_points);
+            polyline(num_points + 1, &new_points[0], putter);
         }
     }
 
