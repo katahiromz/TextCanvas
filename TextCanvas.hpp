@@ -138,8 +138,9 @@ namespace textcanvas
 
         void fill(const TextCanvas& bin);
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
-        void get_subimage(coord_t x0, coord_t y0, coord_t x1, coord_t y1, TextCanvas& image) const;
+        void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
+        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(const Point& p, color_t ch, bool surface = false);
@@ -608,7 +609,7 @@ namespace textcanvas
         }
     }
 
-    inline void TextCanvas::get_subimage(coord_t x0, coord_t y0, coord_t x1, coord_t y1, TextCanvas& image) const
+    inline void TextCanvas::get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const
     {
         if (x0 > x1)
             std::swap(x0, x1);
@@ -632,20 +633,30 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image)
     {
-        coord_t x1 = x0 + image.width();
-        coord_t y1 = y0 + image.height();
+        put_subimage(x0, y0, image, 1, 1);
+    }
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
+    {
+        coord_t x1 = x0 + image.width() * x_zoom;
+        coord_t y1 = y0 + image.height() * y_zoom;
 
-        coord_t py = 0;
-        for (coord_t y = y0; y <= y1; ++y)
+        coord_t y = 0;
+        for (coord_t py = 0; py < image.height(); ++py)
         {
-            coord_t px = 0;
-            for (coord_t x = x0; x <= x1; ++x)
+            coord_t x = 0;
+            for (coord_t px = 0; px < image.width(); ++px)
             {
                 color_t ch = image.get_pixel(px, py);
-                put_pixel(x, y, ch);
-                ++px;
+                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
+                {
+                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
+                    {
+                        put_pixel(x0 + x * x_zoom + x2, y0 + y * y_zoom + y2, ch);
+                    }
+                }
+                ++x;
             }
-            ++py;
+            ++y;
         }
     }
 

@@ -10,3 +10,4 @@
 ./build/PieTest.exe > TestResults/PieTest.txt
 ./build/PolygonTest.exe > TestResults/PolygonTest.txt
 ./build/RoundRectTest.exe > TestResults/RoundRectTest.txt
+./build/SubImageTest.exe > TestResults/SubImageTest.txt
