@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    10  // Version 10
+#define TEXT_CANVAS_HPP_    11  // Version 11
 
 #if _MSC_VER > 1000
     #pragma once
@@ -50,11 +50,11 @@ namespace textcanvas
     };
     typedef std::vector<Point> Points;
 
-    inline bool operator==(Point p0, Point p1)
+    inline bool operator==(const Point& p0, const Point& p1)
     {
         return p0.x == p1.x && p0.y == p1.y;
     }
-    inline bool operator!=(Point p0, Point p1)
+    inline bool operator!=(const Point& p0, const Point& p1)
     {
         return p0.x != p1.x || p0.y != p1.y;
     }
@@ -77,8 +77,8 @@ namespace textcanvas
 
     bool get_polygon_box(Point& p0, Point& p1, size_t num_points, const Point *points);
 
-    size_t crossing_number(Point p, const Points& points);
-    coord_t winding_number(Point p, const Points& points);
+    size_t crossing_number(const Point& p, const Points& points);
+    coord_t winding_number(const Point& p, const Points& points);
 
     bool check_range(double at, bool clockwise, double a0, double a1);
 
@@ -112,7 +112,7 @@ namespace textcanvas
 
         string_type to_str() const;
         bool in_range(coord_t x, coord_t y) const;
-        bool in_range(Point p) const;
+        bool in_range(const Point& p) const;
               string_type& data();
         const string_type& data() const;
         bool same_size(const TextCanvas& tc) const;
@@ -122,11 +122,11 @@ namespace textcanvas
         void resize(coord_t width, coord_t height, color_t ch = space);
 
         color_t get_pixel(coord_t x, coord_t y) const;
-        color_t get_pixel(Point p) const;
+        color_t get_pixel(const Point& p) const;
         void put_pixel(coord_t x, coord_t y, color_t ch);
-        void put_pixel(Point p, color_t ch);
+        void put_pixel(const Point& p, color_t ch);
         void put_pixel(coord_t x, coord_t y);
-        void put_pixel(Point p);
+        void put_pixel(const Point& p);
 
         color_t color() const;
         void color(color_t ch);
@@ -142,34 +142,34 @@ namespace textcanvas
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
-        void flood_fill(Point p, color_t ch, bool surface = false);
+        void flood_fill(const Point& p, color_t ch, bool surface = false);
         void flood_fill_bordered(coord_t x, coord_t y, color_t border_ch);
-        void flood_fill_bordered(Point p, color_t border_ch);
+        void flood_fill_bordered(const Point& p, color_t border_ch);
         void flood_fill_surface(coord_t x, coord_t y, color_t surface_ch);
-        void flood_fill_surface(Point p, color_t surface_ch);
+        void flood_fill_surface(const Point& p, color_t surface_ch);
 
         void move_to(coord_t x, coord_t y);
-        void move_to(Point p);
+        void move_to(const Point& p);
 
         void line_to(coord_t x, coord_t y);
-        void line_to(Point p);
+        void line_to(const Point& p);
         template <typename T_PUTTER>
         void line_to(coord_t x, coord_t y, T_PUTTER& putter);
         template <typename T_PUTTER>
-        void line_to(Point p, T_PUTTER& putter);
+        void line_to(const Point& p, T_PUTTER& putter);
 
         void line(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
-        void line(Point p0, Point p1);
+        void line(const Point& p0, const Point& p1);
         template <typename T_PUTTER>
         void line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
 
         void rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
-        void rectangle(Point p0, Point p1);
+        void rectangle(const Point& p0, const Point& p1);
         template <typename T_PUTTER>
         void rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
 
         void fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
-        void fill_rectangle(Point p0, Point p1);
+        void fill_rectangle(const Point& p0, const Point& p1);
         template <typename T_PUTTER>
         void fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
 
@@ -184,42 +184,42 @@ namespace textcanvas
         void fill_circle(coord_t x0, coord_t y0, coord_t r, T_PUTTER& putter);
 
         void ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
-        void ellipse(Point p0, Point p1);
+        void ellipse(const Point& p0, const Point& p1);
         template <typename T_PUTTER>
         void ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
 
         void fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1);
-        void fill_ellipse(Point p0, Point p1);
+        void fill_ellipse(const Point& p0, const Point& p1);
         template <typename T_PUTTER>
         void fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter);
 
         void arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise = false);
-        void arc(Point p0, Point p1, double start_radian, double end_radian, bool clockwise = false);
+        void arc(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise = false);
         template <typename T_PUTTER>
         void arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter);
 
         void arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise = false);
-        void arc_to(Point p0, Point p1, double start_radian, double end_radian, bool clockwise = false);
+        void arc_to(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise = false);
         template <typename T_PUTTER>
         void arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter);
 
         void pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian);
-        void pie(Point p0, Point p1, double start_radian, double end_radian);
+        void pie(const Point& p0, const Point& p1, double start_radian, double end_radian);
         template <typename T_PUTTER>
         void pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, T_PUTTER& putter);
 
         void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise = false);
-        void fill_pie(Point p0, Point p1, double start_radian, double end_radian, bool clockwise = false);
+        void fill_pie(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise = false);
         template <typename T_PUTTER>
         void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter);
 
         void round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry);
-        void round_rect(Point p0, Point p1, coord_t rx, coord_t ry);
+        void round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry);
         template <typename T_PUTTER>
         void round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter);
 
         void fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry);
-        void fill_round_rect(Point p0, Point p1, coord_t rx, coord_t ry);
+        void fill_round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry);
         template <typename T_PUTTER>
         void fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry, T_PUTTER& putter);
 
@@ -350,7 +350,7 @@ namespace textcanvas
         return true;
     }
 
-    inline size_t crossing_number(Point p, const Points& points)
+    inline size_t crossing_number(const Point& p, const Points& points)
     {
         size_t ret = 0;
         for (size_t i = 0; i < points.size() - 1; ++i)
@@ -367,7 +367,7 @@ namespace textcanvas
         }
         return ret;
     }
-    inline coord_t winding_number(Point p, const Points& points)
+    inline coord_t winding_number(const Point& p, const Points& points)
     {
         coord_t ret = 0;
         for (size_t i = 0; i < points.size() - 1; ++i)
@@ -455,7 +455,7 @@ namespace textcanvas
     {
         return (0 <= x && x < m_width && 0 <= y && y < m_height);
     }
-    inline bool TextCanvas::in_range(Point p) const
+    inline bool TextCanvas::in_range(const Point& p) const
     {
         return in_range(p.x, p.y);
     }
@@ -509,7 +509,7 @@ namespace textcanvas
         }
         return space;
     }
-    inline color_t TextCanvas::get_pixel(Point p) const
+    inline color_t TextCanvas::get_pixel(const Point& p) const
     {
         return get_pixel(p.x, p.y);
     }
@@ -522,7 +522,7 @@ namespace textcanvas
         m_pos.x = x;
         m_pos.y = y;
     }
-    inline void TextCanvas::put_pixel(Point p, color_t ch)
+    inline void TextCanvas::put_pixel(const Point& p, color_t ch)
     {
         put_pixel(p.x, p.y, ch);
     }
@@ -530,7 +530,7 @@ namespace textcanvas
     {
         put_pixel(x, y, m_ch);
     }
-    inline void TextCanvas::put_pixel(Point p)
+    inline void TextCanvas::put_pixel(const Point& p)
     {
         put_pixel(p, m_ch);
     }
@@ -656,7 +656,7 @@ namespace textcanvas
         else
             flood_fill_bordered(x, y, ch);
     }
-    inline void TextCanvas::flood_fill(Point p, color_t ch, bool surface)
+    inline void TextCanvas::flood_fill(const Point& p, color_t ch, bool surface)
     {
         flood_fill(p.x, p.y, ch, surface);
     }
@@ -742,11 +742,11 @@ namespace textcanvas
         m_pos.x = x;
         m_pos.y = y;
     }
-    inline void TextCanvas::flood_fill_bordered(Point p, color_t border_ch)
+    inline void TextCanvas::flood_fill_bordered(const Point& p, color_t border_ch)
     {
         flood_fill_bordered(p.x, p.y, border_ch);
     }
-    inline void TextCanvas::flood_fill_surface(Point p, color_t surface_ch)
+    inline void TextCanvas::flood_fill_surface(const Point& p, color_t surface_ch)
     {
         flood_fill_surface(p.x, p.y, surface_ch);
     }
@@ -756,7 +756,7 @@ namespace textcanvas
         m_pos.x = x;
         m_pos.y = y;
     }
-    inline void TextCanvas::move_to(Point p)
+    inline void TextCanvas::move_to(const Point& p)
     {
         m_pos = p;
     }
@@ -765,7 +765,7 @@ namespace textcanvas
     {
         line(m_pos.x, m_pos.y, x, y);
     }
-    inline void TextCanvas::line_to(Point p)
+    inline void TextCanvas::line_to(const Point& p)
     {
         line(m_pos, p);
     }
@@ -775,7 +775,7 @@ namespace textcanvas
         line(m_pos.x, m_pos.y, x, y, putter);
     }
     template <typename T_PUTTER>
-    inline void TextCanvas::line_to(Point p, T_PUTTER& putter)
+    inline void TextCanvas::line_to(const Point& p, T_PUTTER& putter)
     {
         line_to(p.x, p.y, putter);
     }
@@ -785,7 +785,7 @@ namespace textcanvas
         SimplePutter putter(this);
         line(x0, y0, x1, y1, putter);
     }
-    inline void TextCanvas::line(Point p0, Point p1)
+    inline void TextCanvas::line(const Point& p0, const Point& p1)
     {
         line(p0.x, p0.y, p1.x, p1.y);
     }
@@ -822,7 +822,7 @@ namespace textcanvas
         SimplePutter putter(this);
         rectangle(x0, y0, x1, y1, putter);
     }
-    inline void TextCanvas::rectangle(Point p0, Point p1)
+    inline void TextCanvas::rectangle(const Point& p0, const Point& p1)
     {
         rectangle(p0.x, p0.y, p1.x, p1.y);
     }
@@ -842,7 +842,7 @@ namespace textcanvas
         SimplePutter putter(this);
         fill_rectangle(x0, y0, x1, y1, putter);
     }
-    inline void TextCanvas::fill_rectangle(Point p0, Point p1)
+    inline void TextCanvas::fill_rectangle(const Point& p0, const Point& p1)
     {
         fill_rectangle(p0.x, p0.y, p1.x, p1.y);
     }
@@ -1518,27 +1518,27 @@ namespace textcanvas
         fill_pie(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
-    inline void TextCanvas::ellipse(Point p0, Point p1)
+    inline void TextCanvas::ellipse(const Point& p0, const Point& p1)
     {
         ellipse(p0.x, p0.y, p1.x, p1.y);
     }
-    inline void TextCanvas::fill_ellipse(Point p0, Point p1)
+    inline void TextCanvas::fill_ellipse(const Point& p0, const Point& p1)
     {
         fill_ellipse(p0.x, p0.y, p1.x, p1.y);
     }
-    inline void TextCanvas::arc(Point p0, Point p1, double start_radian, double end_radian, bool clockwise)
+    inline void TextCanvas::arc(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise)
     {
         arc(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
     }
-    inline void TextCanvas::arc_to(Point p0, Point p1, double start_radian, double end_radian, bool clockwise)
+    inline void TextCanvas::arc_to(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise)
     {
         arc_to(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
     }
-    inline void TextCanvas::pie(Point p0, Point p1, double start_radian, double end_radian)
+    inline void TextCanvas::pie(const Point& p0, const Point& p1, double start_radian, double end_radian)
     {
         pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian);
     }
-    inline void TextCanvas::fill_pie(Point p0, Point p1, double start_radian, double end_radian, bool clockwise)
+    inline void TextCanvas::fill_pie(const Point& p0, const Point& p1, double start_radian, double end_radian, bool clockwise)
     {
         fill_pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
     }
@@ -1575,7 +1575,7 @@ namespace textcanvas
         SimplePutter putter(this);
         round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
-    inline void TextCanvas::round_rect(Point p0, Point p1, coord_t rx, coord_t ry)
+    inline void TextCanvas::round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry)
     {
         round_rect(p0.x, p0.y, p1.x, p1.y, rx, ry);
     }
@@ -1614,7 +1614,7 @@ namespace textcanvas
         SimplePutter putter(this);
         fill_round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
-    inline void TextCanvas::fill_round_rect(Point p0, Point p1, coord_t rx, coord_t ry)
+    inline void TextCanvas::fill_round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry)
     {
         fill_round_rect(p0.x, p0.y, p1.x, p1.y, rx, ry);
     }
