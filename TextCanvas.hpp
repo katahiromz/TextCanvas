@@ -637,11 +637,9 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
     {
-        coord_t y = 0;
-        for (coord_t py = 0; py < image.height(); ++py)
+        for (coord_t y = 0, py = 0; py < image.height(); ++y, ++py)
         {
-            coord_t x = 0;
-            for (coord_t px = 0; px < image.width(); ++px)
+            for (coord_t x = 0, px = 0; px < image.width(); ++x, ++px)
             {
                 color_t ch = image.get_pixel(px, py);
                 for (coord_t y2 = 0; y2 < y_zoom; ++y2)
@@ -651,9 +649,7 @@ namespace textcanvas
                         put_pixel(x0 + x * x_zoom + x2, y0 + y * y_zoom + y2, ch);
                     }
                 }
-                ++x;
             }
-            ++y;
         }
     }
 
