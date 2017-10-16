@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    6   // Version 6
+#define TEXT_CANVAS_HPP_    7   // Version 7
 
 #if _MSC_VER > 1000
     #pragma once
@@ -10,8 +10,8 @@
 
 #include <string>       // for std::string
 #include <vector>       // for std::vector
-#include <algorithm>    // for std::swap
-#include <cmath>        // for std::sqrt
+#include <algorithm>    // for std::swap, std::find
+#include <cmath>        // for std::sqrt, std::atan2
 #include <cassert>      // for assert macro
 
 ///////////////////////////////////////////////////////////////////////////
@@ -772,7 +772,7 @@ namespace textcanvas
         coord_t err = dx - dy;
         for (;;)
         {
-            put_pixel(x0, y0);
+            putter(x0, y0);
             if (x0 == x1 && y0 == y1)
                 break;
 
