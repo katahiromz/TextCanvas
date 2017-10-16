@@ -11,7 +11,7 @@
 #include <string>       // for std::string
 #include <vector>       // for std::vector
 #include <algorithm>    // for std::swap, std::find
-#include <cmath>        // for std::sqrt, std::atan2
+#include <cmath>        // for std::sqrt, std::atan2, std::fmod, ...
 #include <cassert>      // for assert macro
 
 ///////////////////////////////////////////////////////////////////////////
