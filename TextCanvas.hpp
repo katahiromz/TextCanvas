@@ -1750,7 +1750,6 @@ namespace textcanvas
                 }
             }
             polyline(new_points);
-            m_pos = points[0];
         }
     }
     template <typename T_PUTTER>
@@ -1773,7 +1772,6 @@ namespace textcanvas
                 }
             }
             polyline(new_points);
-            m_pos = points[0];
         }
     }
 
