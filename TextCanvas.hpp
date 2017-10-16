@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    4   // Version 4
+#define TEXT_CANVAS_HPP_    5   // Version 5
 
 #if _MSC_VER > 1000
     #pragma once
@@ -214,10 +214,10 @@ namespace textcanvas
         template <typename T_PUTTER>
         void pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, T_PUTTER& putter);
 
-        void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian);
-        void fill_pie(Point p0, Point p1, double start_radian, double end_radian);
+        void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise = false);
+        void fill_pie(Point p0, Point p1, double start_radian, double end_radian, bool clockwise = false);
         template <typename T_PUTTER>
-        void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, T_PUTTER& putter);
+        void fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter);
 
         void round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry);
         void round_rect(Point p0, Point p1, coord_t rx, coord_t ry);
@@ -1235,14 +1235,13 @@ namespace textcanvas
     template <typename T_PUTTER>
     inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter)
     {
-        if (clockwise)
-            std::swap(start_radian, end_radian);
-
-        if (start_radian > end_radian)
-            return;
-
         start_radian = normalize_radian(start_radian);
         end_radian = normalize_radian(end_radian);
+        if (start_radian > end_radian)
+        {
+            std::swap(start_radian, end_radian);
+            clockwise = !clockwise;
+        }
 
         if (x0 > x1)
             std::swap(x0, x1);
@@ -1259,7 +1258,9 @@ namespace textcanvas
             T_PUTTER& putter;
             double px, py, u, v;
             double start_radian, end_radian;
-            PUTTER(T_PUTTER& putter_, double px_, double py_, double u_, double v_, double start_radian_, double end_radian_)
+            bool clockwise;
+            PUTTER(T_PUTTER& putter_, double px_, double py_, double u_, double v_,
+                   double start_radian_, double end_radian_, bool clockwise_)
                 : putter(putter_)
             {
                 px = px_;
@@ -1268,27 +1269,33 @@ namespace textcanvas
                 v = v_;
                 start_radian = start_radian_;
                 end_radian = end_radian_;
+                clockwise = clockwise_;
             }
             void operator()(coord_t x, coord_t y)
             {
-                double at = atan2(u * (y - py), v * (x - px));
-                if (start_radian <= end_radian)
+                double at = atan2(-u * (y - py), v * (x - px));
+                bool flag = false;
+                if (clockwise)
                 {
-                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    if ((-pi <= at && at <= start_radian + epsilon) ||
+                        (end_radian - epsilon <= at && at <= pi))
                     {
-                        putter(x, y);
+                        flag = true;
                     }
                 }
                 else
                 {
-                    if ((-pi <= at && at <= end_radian + epsilon) ||
-                        (start_radian - epsilon <= at && at <= pi))
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
                     {
-                        putter(x, y);
+                        flag = true;
                     }
                 }
+                if (flag)
+                {
+                    putter(x, y);
+                }
             }
-        } another_putter(putter, px, py, u, v, start_radian, end_radian);
+        } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise);
         ellipse(x0, y0, x1, y1, another_putter);
     }
     inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
@@ -1302,14 +1309,13 @@ namespace textcanvas
     {
         Point old_pos = pos();
 
-        if (clockwise)
-            std::swap(start_radian, end_radian);
-
-        if (start_radian > end_radian)
-            return;
-
         start_radian = normalize_radian(start_radian);
         end_radian = normalize_radian(end_radian);
+        if (start_radian > end_radian)
+        {
+            std::swap(start_radian, end_radian);
+            clockwise = !clockwise;
+        }
 
         if (x0 > x1)
             std::swap(x0, x1);
@@ -1326,11 +1332,12 @@ namespace textcanvas
             T_PUTTER& putter;
             double px, py, u, v;
             double start_radian, end_radian;
+            bool clockwise;
             double q_radian, qx, qy;
             double r_radian, rx, ry;
             PUTTER(T_PUTTER& putter_,
                 double px_, double py_, double u_, double v_,
-                double start_radian_, double end_radian_,
+                double start_radian_, double end_radian_, bool clockwise_,
                 double q_radian_, double qx_, double qy_,
                 double r_radian_, double rx_, double ry_) : putter(putter_)
             {
@@ -1339,6 +1346,7 @@ namespace textcanvas
                 u = u_;
                 v = v_;
                 start_radian = start_radian_;
+                clockwise = clockwise_;
                 end_radian = end_radian_;
                 q_radian = q_radian_;
                 qx = qx_;
@@ -1349,19 +1357,19 @@ namespace textcanvas
             }
             void operator()(coord_t x, coord_t y)
             {
-                double at = atan2(v * (y - py), u * (x - px));
+                double at = atan2(-u * (y - py), v * (x - px));
                 bool flag = false;
-                if (start_radian <= end_radian)
+                if (clockwise)
                 {
-                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    if ((-pi <= at && at <= start_radian + epsilon) ||
+                        (end_radian - epsilon <= at && at <= pi))
                     {
                         flag = true;
                     }
                 }
                 else
                 {
-                    if ((-pi <= at && at <= end_radian + epsilon) ||
-                        (start_radian - epsilon <= at && at <= pi))
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
                     {
                         flag = true;
                     }
@@ -1383,7 +1391,7 @@ namespace textcanvas
                     }
                 }
             }
-        } another_putter(putter, px, py, u, v, start_radian, end_radian,
+        } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise,
                          100, px, py, -100, px, py);
         ellipse(x0, y0, x1, y1, another_putter);
         line(old_pos.x, old_pos.y, my_round(another_putter.qx), my_round(another_putter.qy), putter);
@@ -1397,11 +1405,14 @@ namespace textcanvas
     template <typename T_PUTTER>
     inline void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, T_PUTTER& putter)
     {
-        if (start_radian > end_radian)
-            return;
-
+        bool clockwise = false;
         start_radian = normalize_radian(start_radian);
         end_radian = normalize_radian(end_radian);
+        if (start_radian > end_radian)
+        {
+            std::swap(start_radian, end_radian);
+            clockwise = !clockwise;
+        }
 
         if (x0 > x1)
             std::swap(x0, x1);
@@ -1418,11 +1429,12 @@ namespace textcanvas
             T_PUTTER& putter;
             double px, py, u, v;
             double start_radian, end_radian;
+            bool clockwise;
             double q_radian, qx, qy;
             double r_radian, rx, ry;
             PUTTER(T_PUTTER& putter_,
                 double px_, double py_, double u_, double v_,
-                double start_radian_, double end_radian_,
+                double start_radian_, double end_radian_, bool clockwise_,
                 double q_radian_, double qx_, double qy_,
                 double r_radian_, double rx_, double ry_) : putter(putter_)
             {
@@ -1432,6 +1444,7 @@ namespace textcanvas
                 v = v_;
                 start_radian = start_radian_;
                 end_radian = end_radian_;
+                clockwise = clockwise_;
                 q_radian = q_radian_;
                 qx = qx_;
                 qy = qy_;
@@ -1441,19 +1454,19 @@ namespace textcanvas
             }
             bool check(double& at, coord_t x, coord_t y)
             {
-                at = atan2(v * (y - py), u * (x - px));
+                at = atan2(-u * (y - py), v * (x - px));
                 bool flag = false;
-                if (start_radian <= end_radian)
+                if (clockwise)
                 {
-                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    if ((-pi <= at && at <= start_radian + epsilon) ||
+                        (end_radian - epsilon <= at && at <= pi))
                     {
                         flag = true;
                     }
                 }
                 else
                 {
-                    if ((-pi <= at && at <= end_radian + epsilon) ||
-                        (start_radian - epsilon <= at && at <= pi))
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
                     {
                         flag = true;
                     }
@@ -1484,7 +1497,7 @@ namespace textcanvas
                     ry = y;
                 }
             }
-        } another_putter(putter, px, py, u, v, start_radian, end_radian,
+        } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise,
                          100, px, py, -100, px, py);
         ellipse(x0, y0, x1, y1, another_putter);
 
@@ -1499,13 +1512,15 @@ namespace textcanvas
     }
 
     template <typename T_PUTTER>
-    inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, T_PUTTER& putter)
+    inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise, T_PUTTER& putter)
     {
-        if (start_radian > end_radian)
-            return;
-
         start_radian = normalize_radian(start_radian);
         end_radian = normalize_radian(end_radian);
+        if (start_radian > end_radian)
+        {
+            std::swap(start_radian, end_radian);
+            clockwise = !clockwise;
+        }
 
         if (x0 > x1)
             std::swap(x0, x1);
@@ -1522,9 +1537,10 @@ namespace textcanvas
             T_PUTTER& putter;
             double px, py, u, v;
             double start_radian, end_radian;
+            bool clockwise;
             PUTTER(T_PUTTER& putter_,
                 double px_, double py_, double u_, double v_,
-                double start_radian_, double end_radian_) : putter(putter_)
+                double start_radian_, double end_radian_, bool clockwise_) : putter(putter_)
             {
                 px = px_;
                 py = py_;
@@ -1532,37 +1548,40 @@ namespace textcanvas
                 v = v_;
                 start_radian = start_radian_;
                 end_radian = end_radian_;
+                clockwise = clockwise_;
             }
             void operator()(coord_t x, coord_t y)
             {
-                double at = atan2(v * (y - py), u * (x - px));
+                double at = atan2(-u * (y - py), v * (x - px));
                 bool flag = false;
-                if (start_radian <= end_radian)
+                if (clockwise)
                 {
-                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
+                    if ((-pi <= at && at <= start_radian + epsilon) ||
+                        (end_radian - epsilon <= at && at <= pi))
                     {
                         flag = true;
                     }
                 }
                 else
                 {
-                    if ((-pi <= at && at <= end_radian + epsilon) ||
-                        (start_radian - epsilon <= at && at <= pi))
+                    if (start_radian - epsilon <= at && at <= end_radian + epsilon)
                     {
                         flag = true;
                     }
                 }
                 if (flag)
+                {
                     putter(x, y);
+                }
             }
-        } another_putter(putter, px, py, u, v, start_radian, end_radian);
+        } another_putter(putter, px, py, u, v, start_radian, end_radian, clockwise);
         fill_ellipse(x0, y0, x1, y1, another_putter);
         putter(coord_t(px), coord_t(py));
     }
-    inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian)
+    inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
     {
         SimplePutter putter(this);
-        fill_pie(x0, y0, x1, y1, start_radian, end_radian, putter);
+        fill_pie(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
     inline void TextCanvas::ellipse(Point p0, Point p1)
@@ -1585,9 +1604,9 @@ namespace textcanvas
     {
         pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian);
     }
-    inline void TextCanvas::fill_pie(Point p0, Point p1, double start_radian, double end_radian)
+    inline void TextCanvas::fill_pie(Point p0, Point p1, double start_radian, double end_radian, bool clockwise)
     {
-        fill_pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian);
+        fill_pie(p0.x, p0.y, p1.x, p1.y, start_radian, end_radian, clockwise);
     }
 
     template <typename T_PUTTER>
@@ -1607,13 +1626,13 @@ namespace textcanvas
             ry = dy / 2;
 
         line(x0 + rx, y0, x1 - rx, y0, putter);
-        arc(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0, false, putter);
+        arc(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / 2, 0, true, putter);
         line(x1, y0 + ry, x1, y1 - ry, putter);
-        arc(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2, false, putter);
+        arc(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / -2, true, putter);
         line(x1 - rx, y1, x0 + rx, y1, putter);
-        arc(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi, false, putter);
+        arc(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / -2, -pi, true, putter);
         line(x0, y1 - ry, x0, y0 + ry, putter);
-        arc(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2, false, putter);
+        arc(x0, y0, x0 + 2 * rx, y0 + 2 * ry, pi, pi / 2, true, putter);
 
         pos() = old_pos;
     }
@@ -1644,13 +1663,13 @@ namespace textcanvas
             ry = dy / 2;
 
         fill_rectangle(x0 + rx, y0, x1 - rx, y0 + ry, putter);
-        fill_pie(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / -2, 0, putter);
+        fill_pie(x1 - 2 * rx, y0, x1, y0 + 2 * ry, pi / 2, 0, true, putter);
         fill_rectangle(x1 - rx, y0 + ry, x1, y1 - ry, putter);
-        fill_pie(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / 2, putter);
+        fill_pie(x1 - 2 * rx, y1 - 2 * ry, x1, y1, 0, pi / -2, true, putter);
         fill_rectangle(x1 - rx, y1 - ry, x0 + rx, y1, putter);
-        fill_pie(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / 2, pi, putter);
+        fill_pie(x0, y1 - 2 * rx, x0 + 2 * rx, y1, pi / -2, -pi, true, putter);
         fill_rectangle(x0, y1 - ry, x0 + rx, y0 + ry, putter);
-        fill_pie(x0, y0, x0 + 2 * rx, y0 + 2 * ry, -pi, pi / -2, putter);
+        fill_pie(x0, y0, x0 + 2 * rx, y0 + 2 * ry, pi, pi / 2, true, putter);
 
         fill_rectangle(x0 + rx, y0 + ry, x1 - rx, y1 - ry, putter);
 
