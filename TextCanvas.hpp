@@ -637,16 +637,16 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
     {
-        for (coord_t y = 0, py = 0; py < image.height(); ++y, ++py)
+        for (coord_t py = 0; py < image.height(); ++py)
         {
-            for (coord_t x = 0, px = 0; px < image.width(); ++x, ++px)
+            for (coord_t px = 0; px < image.width(); ++px)
             {
                 color_t ch = image.get_pixel(px, py);
                 for (coord_t y2 = 0; y2 < y_zoom; ++y2)
                 {
                     for (coord_t x2 = 0; x2 < x_zoom; ++x2)
                     {
-                        put_pixel(x0 + x * x_zoom + x2, y0 + y * y_zoom + y2, ch);
+                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
                     }
                 }
             }
