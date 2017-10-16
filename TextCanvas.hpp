@@ -67,15 +67,7 @@ namespace textcanvas
         return coord_t(d + 0.5);
     }
 
-    inline double normalize_radian(double radian)
-    {
-        radian = fmod(radian, 2 * pi);
-        if (radian < -pi)
-            radian += 2 * pi;
-        else if (radian > pi)
-            radian -= 2 * pi;
-        return radian;
-    }
+    double normalize_radian(double radian);
 
     inline bool
     in_rect(coord_t x, coord_t y, coord_t x0, coord_t y0, coord_t x1, coord_t y1)
@@ -305,6 +297,16 @@ namespace textcanvas
     };
 
     ///////////////////////////////////////////////////////////////////////////
+
+    inline double normalize_radian(double radian)
+    {
+        radian = fmod(radian, 2 * pi);
+        if (radian < -pi)
+            radian += 2 * pi;
+        else if (radian > pi)
+            radian -= 2 * pi;
+        return radian;
+    }
 
     inline bool check_range(double at, bool whole_range, bool clockwise, double a0, double a1)
     {
