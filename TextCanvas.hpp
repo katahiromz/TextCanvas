@@ -20,9 +20,8 @@ namespace textcanvas
 {
     typedef std::string                 string_type;
     typedef string_type::value_type     char_type;
-    typedef std::ptrdiff_t              ptrdiff_t;
-    typedef ptrdiff_t                   coord_t;
     typedef char_type                   color_t;
+    typedef std::ptrdiff_t              coord_t;
 
 #ifdef M_PI
     static const double pi = M_PI;
