@@ -8,8 +8,8 @@ int main(void)
     Point points[5];
     for (coord_t n = 0; n < 5; ++n)
     {
-        points[n].x = my_round(100 / 2 + 100 / 2 * cos(n * 72 * 2 * 3.14 / 180));
-        points[n].y = my_round(100 / 2 + 100 / 2 * sin(n * 72 * 2 * 3.14 / 180));
+        points[n].x = do_round(100 / 2 + 100 / 2 * cos(n * 72 * 2 * 3.14 / 180));
+        points[n].y = do_round(100 / 2 + 100 / 2 * sin(n * 72 * 2 * 3.14 / 180));
     }
     canvas.color('*');
     canvas.circle(100 / 2, 100 / 2, 100 / 2);
