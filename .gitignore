@@ -13,6 +13,7 @@ NormalizeRadianTest
 PieTest
 PolygonTest
 RoundRectTest
+SubImageTest
 ArcTest.exe
 CircleTest.exe
 EllipseTest.exe
@@ -24,6 +25,7 @@ NormalizeRadianTest.exe
 PieTest.exe
 PolygonTest.exe
 RoundRectTest.exe
+SubImageTest.exe
 *.res
 *.tds
 Debug
