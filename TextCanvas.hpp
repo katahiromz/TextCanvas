@@ -796,6 +796,7 @@ namespace textcanvas
     template <typename T_PUTTER>
     inline void TextCanvas::line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
     {
+        // Bresenham's line algorithm
         const coord_t dx = std::abs(x1 - x0), dy = std::abs(y1 - y0);
         const coord_t sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
         coord_t err = dx - dy;
