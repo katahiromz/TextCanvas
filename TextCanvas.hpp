@@ -34,6 +34,7 @@ namespace textcanvas
     static const color_t one = color_t(1);
     static const color_t space = color_t(' ');
     static const color_t newline = color_t('\n');
+    static const color_t asterisk = color_t('*');
 
     ///////////////////////////////////////////////////////////////////////////
     // Point and Points
@@ -89,7 +90,8 @@ namespace textcanvas
     {
     public:
         TextCanvas();
-        TextCanvas(coord_t width, coord_t height, color_t ch = space);
+        TextCanvas(coord_t width, coord_t height,
+                   color_t fore_color = asterisk, color_t back_color = space);
         TextCanvas(const TextCanvas& tc);
         TextCanvas& operator=(const TextCanvas& tc);
         virtual ~TextCanvas();
@@ -98,7 +100,8 @@ namespace textcanvas
         coord_t     m_width;
         coord_t     m_height;
         string_type m_text;
-        color_t     m_ch;
+        color_t     m_fore_color;
+        color_t     m_back_color;
         Point       m_pos;
 
     public:
@@ -117,9 +120,12 @@ namespace textcanvas
         const string_type& data() const;
         bool same_size(const TextCanvas& tc) const;
 
-        void clear(color_t ch = space);
-        void reset(coord_t width, coord_t height, color_t ch = space);
-        void resize(coord_t width, coord_t height, color_t ch = space);
+        void clear();
+        void clear(color_t ch);
+        void reset(coord_t width, coord_t height);
+        void reset(coord_t width, coord_t height, color_t ch);
+        void resize(coord_t width, coord_t height);
+        void resize(coord_t width, coord_t height, color_t ch);
 
         color_t get_pixel(coord_t x, coord_t y) const;
         color_t get_pixel(const Point& p) const;
@@ -128,8 +134,11 @@ namespace textcanvas
         void put_pixel(coord_t x, coord_t y);
         void put_pixel(const Point& p);
 
-        color_t color() const;
-        void color(color_t ch);
+        color_t fore_color() const;
+        void fore_color(color_t ch);
+
+        color_t back_color() const;
+        void back_color(color_t ch);
 
         friend TextCanvas operator!(const TextCanvas& bin);
         friend TextCanvas operator&(const TextCanvas& bin1, const TextCanvas& bin2);
@@ -258,42 +267,63 @@ namespace textcanvas
     ///////////////////////////////////////////////////////////////////////////
     // pixel putters
 
-    struct SimplePutter
+    struct NonePutter
     {
-        TextCanvas *m_tc;
-        SimplePutter(TextCanvas *tc) : m_tc(tc)
+        NonePutter()
         {
         }
         void operator()(coord_t x, coord_t y)
         {
-            m_tc->put_pixel(x, y);
+        }
+    };
+    struct SimplePutter
+    {
+        TextCanvas& m_tc;
+        SimplePutter(TextCanvas& tc) : m_tc(tc)
+        {
+        }
+        void operator()(coord_t x, coord_t y)
+        {
+            m_tc.put_pixel(x, y);
+        }
+    };
+    struct ColorPutter
+    {
+        TextCanvas& m_tc;
+        color_t m_color;
+        ColorPutter(TextCanvas& tc, color_t color) : m_tc(tc), m_color(color)
+        {
+        }
+        void operator()(coord_t x, coord_t y)
+        {
+            m_tc.put_pixel(x, y, m_color);
         }
     };
     struct XorPutter
     {
-        TextCanvas *m_tc;
-        XorPutter(TextCanvas *tc) : m_tc(tc)
+        TextCanvas& m_tc;
+        XorPutter(TextCanvas& tc) : m_tc(tc)
         {
         }
         void operator()(coord_t x, coord_t y)
         {
-            color_t c = m_tc->get_pixel(x, y);
-            m_tc->put_pixel(x, y, c ^ m_tc->color());
+            color_t c = m_tc.get_pixel(x, y);
+            m_tc.put_pixel(x, y, c ^ m_tc.fore_color());
         }
     };
     struct WidenPutter
     {
-        TextCanvas *m_tc;
-        WidenPutter(TextCanvas *tc) : m_tc(tc)
+        TextCanvas& m_tc;
+        WidenPutter(TextCanvas& tc) : m_tc(tc)
         {
         }
         void operator()(coord_t x, coord_t y)
         {
-            m_tc->put_pixel(x, y);
-            m_tc->put_pixel(x - 1, y);
-            m_tc->put_pixel(x + 1, y);
-            m_tc->put_pixel(x, y - 1);
-            m_tc->put_pixel(x, y + 1);
+            m_tc.put_pixel(x, y);
+            m_tc.put_pixel(x - 1, y);
+            m_tc.put_pixel(x + 1, y);
+            m_tc.put_pixel(x, y - 1);
+            m_tc.put_pixel(x, y + 1);
         }
     };
 
@@ -389,15 +419,19 @@ namespace textcanvas
         return ret;
     }
 
-    inline TextCanvas::TextCanvas() : m_width(0), m_height(0), m_text(), m_ch('*'), m_pos(0, 0)
+    inline TextCanvas::TextCanvas()
+        : m_width(0), m_height(0), m_text(),
+          m_fore_color(asterisk), m_back_color(space), m_pos(0, 0)
     {
     }
-    inline TextCanvas::TextCanvas(coord_t width, coord_t height, color_t ch)
-        : m_width(width), m_height(height), m_text(width * height, ch), m_ch('*'), m_pos(0, 0)
+    inline TextCanvas::TextCanvas(coord_t width, coord_t height, color_t fore_color, color_t back_color)
+        : m_width(width), m_height(height), m_text(width * height, back_color),
+          m_fore_color(fore_color), m_back_color(back_color), m_pos(0, 0)
     {
     }
     inline TextCanvas::TextCanvas(const TextCanvas& tc)
-        : m_width(tc.m_width), m_height(tc.m_height), m_text(tc.m_text), m_ch(tc.m_ch), m_pos(tc.m_pos)
+        : m_width(tc.m_width), m_height(tc.m_height), m_text(tc.m_text),
+          m_fore_color(tc.m_fore_color), m_back_color(tc.m_back_color), m_pos(tc.m_pos)
     {
     }
     inline TextCanvas& TextCanvas::operator=(const TextCanvas& tc)
@@ -405,7 +439,8 @@ namespace textcanvas
         m_width = tc.m_width;
         m_height = tc.m_height;
         m_text = tc.m_text;
-        m_ch = tc.m_ch;
+        m_fore_color = tc.m_fore_color;
+        m_back_color = tc.m_back_color;
         m_pos = tc.m_pos;
         return *this;
     }
@@ -474,6 +509,15 @@ namespace textcanvas
         return m_width == tc.m_width && m_height == tc.m_height;
     }
 
+    inline void TextCanvas::clear(color_t ch)
+    {
+        m_text.assign(m_width * m_height, ch);
+    }
+    inline void TextCanvas::clear()
+    {
+        clear(m_back_color);
+    }
+
     inline void TextCanvas::reset(coord_t width, coord_t height, color_t ch)
     {
         m_width = width;
@@ -481,10 +525,11 @@ namespace textcanvas
         m_text.assign(width * height, ch);
         m_pos.x = m_pos.y = 0;
     }
-    inline void TextCanvas::clear(color_t ch)
+    inline void TextCanvas::reset(coord_t width, coord_t height)
     {
-        m_text.assign(m_width * m_height, ch);
+        reset(width, height, m_back_color);
     }
+
     inline void TextCanvas::resize(coord_t width, coord_t height, color_t ch)
     {
         const coord_t min_width = std::min(m_width, width);
@@ -500,6 +545,10 @@ namespace textcanvas
         std::swap(str, m_text);
         m_width = width;
         m_height = height;
+    }
+    inline void TextCanvas::resize(coord_t width, coord_t height)
+    {
+        resize(width, height, m_back_color);
     }
 
     inline color_t TextCanvas::get_pixel(coord_t x, coord_t y) const
@@ -529,20 +578,29 @@ namespace textcanvas
     }
     inline void TextCanvas::put_pixel(coord_t x, coord_t y)
     {
-        put_pixel(x, y, m_ch);
+        put_pixel(x, y, m_fore_color);
     }
     inline void TextCanvas::put_pixel(const Point& p)
     {
-        put_pixel(p, m_ch);
+        put_pixel(p, m_fore_color);
     }
 
-    inline color_t TextCanvas::color() const
+    inline color_t TextCanvas::fore_color() const
     {
-        return m_ch;
+        return m_fore_color;
     }
-    inline void TextCanvas::color(color_t ch)
+    inline void TextCanvas::fore_color(color_t ch)
     {
-        m_ch = ch;
+        m_fore_color = ch;
+    }
+
+    inline color_t TextCanvas::back_color() const
+    {
+        return m_back_color;
+    }
+    inline void TextCanvas::back_color(color_t ch)
+    {
+        m_back_color = ch;
     }
 
     inline TextCanvas operator!(const TextCanvas& bin)
@@ -592,7 +650,7 @@ namespace textcanvas
         {
             if (bin[i])
             {
-                m_text[i] = m_ch;
+                m_text[i] = m_fore_color;
             }
         }
     }
@@ -677,7 +735,7 @@ namespace textcanvas
             p = points[i];
             if (get_pixel(p) != border_ch)
             {
-                put_pixel(p, m_ch);
+                put_pixel(p);
                 p2.x = p.x - 1;
                 p2.y = p.y;
                 if (in_range(p2) && get_pixel(p2) != border_ch &&
@@ -724,7 +782,7 @@ namespace textcanvas
             p = points[i];
             if (get_pixel(p) == surface_ch)
             {
-                put_pixel(p, m_ch);
+                put_pixel(p);
                 p2.x = p.x - 1;
                 p2.y = p.y;
                 if (in_range(p2) && get_pixel(p2) == surface_ch)
@@ -786,7 +844,7 @@ namespace textcanvas
 
     inline void TextCanvas::line(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         line(x0, y0, x1, y1, putter);
     }
     inline void TextCanvas::line(const Point& p0, const Point& p1)
@@ -824,7 +882,7 @@ namespace textcanvas
 
     inline void TextCanvas::rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         rectangle(x0, y0, x1, y1, putter);
     }
     inline void TextCanvas::rectangle(const Point& p0, const Point& p1)
@@ -844,7 +902,7 @@ namespace textcanvas
 
     inline void TextCanvas::fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         fill_rectangle(x0, y0, x1, y1, putter);
     }
     inline void TextCanvas::fill_rectangle(const Point& p0, const Point& p1)
@@ -880,7 +938,7 @@ namespace textcanvas
 
     inline void TextCanvas::circle(coord_t x0, coord_t y0, coord_t r)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         circle(x0, y0, r, putter);
     }
     inline void TextCanvas::circle(const Point& c, coord_t r)
@@ -917,7 +975,7 @@ namespace textcanvas
 
     inline void TextCanvas::fill_circle(coord_t x0, coord_t y0, coord_t r)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         fill_circle(x0, y0, r, putter);
     }
     inline void TextCanvas::fill_circle(const Point& c, coord_t r)
@@ -1224,12 +1282,12 @@ namespace textcanvas
 
     inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         ellipse(x0, y0, x1, y1, putter);
     }
     inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         fill_ellipse(x0, y0, x1, y1, putter);
     }
 
@@ -1287,7 +1345,7 @@ namespace textcanvas
     }
     inline void TextCanvas::arc(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         arc(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
@@ -1372,7 +1430,7 @@ namespace textcanvas
     }
     inline void TextCanvas::arc_to(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         arc_to(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
@@ -1459,7 +1517,7 @@ namespace textcanvas
 
     inline void TextCanvas::pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         pie(x0, y0, x1, y1, start_radian, end_radian, putter);
     }
 
@@ -1519,7 +1577,7 @@ namespace textcanvas
     }
     inline void TextCanvas::fill_pie(coord_t x0, coord_t y0, coord_t x1, coord_t y1, double start_radian, double end_radian, bool clockwise)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         fill_pie(x0, y0, x1, y1, start_radian, end_radian, clockwise, putter);
     }
 
@@ -1577,7 +1635,7 @@ namespace textcanvas
     }
     inline void TextCanvas::round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
     inline void TextCanvas::round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry)
@@ -1616,7 +1674,7 @@ namespace textcanvas
     }
     inline void TextCanvas::fill_round_rect(coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t rx, coord_t ry)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         fill_round_rect(x0, y0, x1, y1, rx, ry, putter);
     }
     inline void TextCanvas::fill_round_rect(const Point& p0, const Point& p1, coord_t rx, coord_t ry)
@@ -1674,7 +1732,7 @@ namespace textcanvas
 
     inline void TextCanvas::polygon(size_t num_points, const Point *points)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         polygon(num_points, points, putter);
     }
     inline void TextCanvas::polygon(const Points& points)
@@ -1753,7 +1811,7 @@ namespace textcanvas
 
     inline void TextCanvas::fill_polygon(size_t num_points, const Point *points, bool alternate)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         if (alternate)
             fill_polygon_alternate(num_points, points, putter);
         else
@@ -1761,7 +1819,7 @@ namespace textcanvas
     }
     inline void TextCanvas::fill_polygon(const Points& points, bool alternate)
     {
-        SimplePutter putter(this);
+        SimplePutter putter(*this);
         if (alternate)
             fill_polygon_alternate(points, putter);
         else

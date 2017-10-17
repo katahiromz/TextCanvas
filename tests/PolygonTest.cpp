@@ -11,10 +11,10 @@ int main(void)
         points[n].x = do_round(100 / 2 + 100 / 2 * cos(n * 72 * 2 * 3.14 / 180));
         points[n].y = do_round(100 / 2 + 100 / 2 * sin(n * 72 * 2 * 3.14 / 180));
     }
-    canvas.color('*');
+    canvas.fore_color('*');
     canvas.circle(100 / 2, 100 / 2, 100 / 2);
     canvas.fill_polygon(5, points, true);
-    canvas.color('#');
+    canvas.fore_color('#');
     canvas.polygon(5, points);
     std::cout << canvas.to_str();
     return 0;

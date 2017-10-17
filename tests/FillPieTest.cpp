@@ -9,9 +9,9 @@ int main(void)
     {
         for (int i = 0; i < 13; ++i)
         {
-            canvas.color('-');
+            canvas.fore_color('-');
             canvas.rectangle(i * 13, k * 13, i * 13 + i, k * 13 + k);
-            canvas.color('#');
+            canvas.fore_color('#');
             canvas.fill_pie(i * 13, k * 13, i * 13 + i, k * 13 + k, pi / 4, pi * 3 / 2);
         }
     }

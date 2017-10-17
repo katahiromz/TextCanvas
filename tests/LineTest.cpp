@@ -8,7 +8,7 @@ int main(void)
     size_t k = 0;
     for (coord_t i = 0; i <= 100; i += 5)
     {
-        canvas.color('0' + k % 10);
+        canvas.fore_color('0' + k % 10);
         canvas.line(i, 100, 100, (100 - i));
         canvas.line(0, (100 - i), i, 0);
         ++k;

@@ -8,7 +8,7 @@ int main(void)
     coord_t k = 0;
     for (coord_t i = 0; i < 50; i += 3)
     {
-        canvas.color('0' + k % 10);
+        canvas.fore_color('0' + k % 10);
         canvas.fill_round_rect(i, i, 100 - i, 100 - i, 10, 10);
         ++k;
     }
