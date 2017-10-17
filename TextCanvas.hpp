@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    12  // Version 12
+#define TEXT_CANVAS_HPP_    13  // Version 13
 
 #if _MSC_VER > 1000
     #pragma once
@@ -1047,26 +1047,6 @@ namespace textcanvas
             m_pos.y = do_round(py);
             return;
         }
-        if (u < 1)
-        {
-            for (coord_t y = y0; y <= y1; ++y)
-            {
-                putter(x0, y);
-            }
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
-            return;
-        }
-        if (v < 1)
-        {
-            for (coord_t x = x0; x <= x1; ++x)
-            {
-                putter(x, y0);
-            }
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
-            return;
-        }
 
         if (dy & 1)
             --py;
@@ -1173,26 +1153,6 @@ namespace textcanvas
                 {
                     putter(x, y);
                 }
-            }
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
-            return;
-        }
-        if (u < 1)
-        {
-            for (coord_t y = y0; y <= y1; ++y)
-            {
-                putter(x0, y);
-            }
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
-            return;
-        }
-        if (v < 1)
-        {
-            for (coord_t x = x0; x <= x1; ++x)
-            {
-                putter(x, y0);
             }
             m_pos.x = do_round(px);
             m_pos.y = do_round(py);
