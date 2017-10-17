@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    15  // Version 15
+#define TEXT_CANVAS_HPP_    16  // Version 16
 
 #if _MSC_VER > 1000
     #pragma once
@@ -66,6 +66,15 @@ namespace textcanvas
     {
         return p0.x != p1.x || p0.y != p1.y;
     }
+    struct point_less
+    {
+        inline bool operator()(const Point& p0, const Point& p1) const
+        {
+            if (p0.x < p1.x)
+                return true;
+            return p0.x == p1.x && p0.y < p1.y;
+        }
+    };
 
     ///////////////////////////////////////////////////////////////////////////
     // functions
@@ -737,6 +746,9 @@ namespace textcanvas
 
         Points points;
         points.push_back(p);
+
+        std::set<Point, point_less> point_set;
+        point_set.insert(p);
         for (size_t i = 0; i < points.size(); ++i)
         {
             p = points[i];
@@ -746,28 +758,28 @@ namespace textcanvas
             put_pixel(p);
 
             --p.x;  // left
-            if (get_pixel(p) != border_ch &&
-                std::find(points.begin(), points.end(), p) == points.end())
+            if (get_pixel(p) != border_ch && !point_set.count(p))
             {
                 points.push_back(p);
+                point_set.insert(p);
             }
             ++p.x; --p.y;  // up
-            if (get_pixel(p) != border_ch &&
-                std::find(points.begin(), points.end(), p) == points.end())
+            if (get_pixel(p) != border_ch && !point_set.count(p))
             {
                 points.push_back(p);
+                point_set.insert(p);
             }
             ++p.x; ++p.y;  // right
-            if (get_pixel(p) != border_ch &&
-                std::find(points.begin(), points.end(), p) == points.end())
+            if (get_pixel(p) != border_ch && !point_set.count(p))
             {
                 points.push_back(p);
+                point_set.insert(p);
             }
             --p.x; ++p.y;  // down
-            if (get_pixel(p) != border_ch &&
-                std::find(points.begin(), points.end(), p) == points.end())
+            if (get_pixel(p) != border_ch && !point_set.count(p))
             {
                 points.push_back(p);
+                point_set.insert(p);
             }
         }
 
