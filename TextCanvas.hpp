@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    13  // Version 13
+#define TEXT_CANVAS_HPP_    15  // Version 15
 
 #if _MSC_VER > 1000
     #pragma once
@@ -564,7 +564,7 @@ namespace textcanvas
         {
             return m_text[y * m_width + x];
         }
-        return space;
+        return m_back_color;
     }
     inline color_t TextCanvas::get_pixel(const Point& p) const
     {
@@ -731,47 +731,43 @@ namespace textcanvas
     }
     inline void TextCanvas::flood_fill_bordered(coord_t x, coord_t y, color_t border_ch)
     {
-        Point p(x, y), p2;
+        Point p(x, y);
         if (!in_range(p))
             return;
 
         Points points;
-
         points.push_back(p);
         for (size_t i = 0; i < points.size(); ++i)
         {
             p = points[i];
-            if (get_pixel(p) != border_ch)
+            if (get_pixel(p) == border_ch)
+                continue;
+
+            put_pixel(p);
+
+            --p.x;  // left
+            if (get_pixel(p) != border_ch &&
+                std::find(points.begin(), points.end(), p) == points.end())
             {
-                put_pixel(p);
-                p2.x = p.x - 1;
-                p2.y = p.y;
-                if (in_range(p2) && get_pixel(p2) != border_ch &&
-                    std::find(points.begin(), points.end(), p2) == points.end())
-                {
-                    points.push_back(p2);
-                }
-                p2.x = p.x + 1;
-                p2.y = p.y;
-                if (in_range(p2) && get_pixel(p2) != border_ch &&
-                    std::find(points.begin(), points.end(), p2) == points.end())
-                {
-                    points.push_back(p2);
-                }
-                p2.x = p.x;
-                p2.y = p.y - 1;
-                if (in_range(p2) && get_pixel(p2) != border_ch &&
-                    std::find(points.begin(), points.end(), p2) == points.end())
-                {
-                    points.push_back(p2);
-                }
-                p2.x = p.x;
-                p2.y = p.y + 1;
-                if (in_range(p2) && get_pixel(p2) != border_ch &&
-                    std::find(points.begin(), points.end(), p2) == points.end())
-                {
-                    points.push_back(p2);
-                }
+                points.push_back(p);
+            }
+            ++p.x; --p.y;  // up
+            if (get_pixel(p) != border_ch &&
+                std::find(points.begin(), points.end(), p) == points.end())
+            {
+                points.push_back(p);
+            }
+            ++p.x; ++p.y;  // right
+            if (get_pixel(p) != border_ch &&
+                std::find(points.begin(), points.end(), p) == points.end())
+            {
+                points.push_back(p);
+            }
+            --p.x; ++p.y;  // down
+            if (get_pixel(p) != border_ch &&
+                std::find(points.begin(), points.end(), p) == points.end())
+            {
+                points.push_back(p);
             }
         }
 
@@ -780,35 +776,32 @@ namespace textcanvas
     }
     inline void TextCanvas::flood_fill_surface(coord_t x, coord_t y, color_t surface_ch)
     {
-        Points points;
-        Point p(x, y), p2;
+        Point p(x, y);
         if (!in_range(p))
             return;
 
+        Points points;
         points.push_back(p);
         for (size_t i = 0; i < points.size(); ++i)
         {
             p = points[i];
+            if (get_pixel(p) != surface_ch)
+                continue;
+
+            put_pixel(p);
+
+            --p.x;  // left
             if (get_pixel(p) == surface_ch)
-            {
-                put_pixel(p);
-                p2.x = p.x - 1;
-                p2.y = p.y;
-                if (in_range(p2) && get_pixel(p2) == surface_ch)
-                    points.push_back(p2);
-                p2.x = p.x + 1;
-                p2.y = p.y;
-                if (in_range(p2) && get_pixel(p2) == surface_ch)
-                    points.push_back(p2);
-                p2.x = p.x;
-                p2.y = p.y - 1;
-                if (in_range(p2) && get_pixel(p2) == surface_ch)
-                    points.push_back(p2);
-                p2.x = p.x;
-                p2.y = p.y + 1;
-                if (in_range(p2) && get_pixel(p2) == surface_ch)
-                    points.push_back(p2);
-            }
+                points.push_back(p);
+            ++p.x; --p.y;  // up
+            if (get_pixel(p) == surface_ch)
+                points.push_back(p);
+            ++p.x; ++p.y;  // right
+            if (get_pixel(p) == surface_ch)
+                points.push_back(p);
+            --p.x; ++p.y;  // down
+            if (get_pixel(p) == surface_ch)
+                points.push_back(p);
         }
         m_pos.x = x;
         m_pos.y = y;
