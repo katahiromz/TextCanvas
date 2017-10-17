@@ -8,6 +8,7 @@ EllipseTest
 FillEllipseTest
 FillPieTest
 FillRoundRectTest
+FloodFillTest
 LineTest
 NormalizeRadianTest
 PieTest
@@ -20,6 +21,7 @@ EllipseTest.exe
 FillEllipseTest.exe
 FillPieTest.exe
 FillRoundRectTest.exe
+FloodFillTest.exe
 LineTest.exe
 NormalizeRadianTest.exe
 PieTest.exe

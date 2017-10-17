@@ -4,6 +4,7 @@
 .\build\FillEllipseTest > TestResults\FillEllipseTest.txt
 .\build\FillPieTest > TestResults\FillPieTest.txt
 .\build\FillRoundRectTest > TestResults\FillRoundRectTest.txt
+.\build\FloodFillTest > TestResults\FloodFillTest.txt
 .\build\LineTest > TestResults\LineTest.txt
 .\build\NormalizeRadianTest > TestResults\NormalizeRadianTest.txt
 .\build\PieTest > TestResults\PieTest.txt

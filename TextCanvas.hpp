@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    11  // Version 11
+#define TEXT_CANVAS_HPP_    12  // Version 12
 
 #if _MSC_VER > 1000
     #pragma once
@@ -10,9 +10,16 @@
 
 #include <string>       // for std::string
 #include <vector>       // for std::vector
+#include <set>          // for std::set
 #include <algorithm>    // for std::swap, std::find
 #include <cmath>        // for std::sqrt, std::atan2, std::fmod, ...
 #include <cassert>      // for assert macro
+
+#ifndef CXX11
+    #if __cplusplus >= 201103L
+        #define CXX11
+    #endif
+#endif
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -724,10 +731,11 @@ namespace textcanvas
     }
     inline void TextCanvas::flood_fill_bordered(coord_t x, coord_t y, color_t border_ch)
     {
-        Points points;
         Point p(x, y), p2;
         if (!in_range(p))
             return;
+
+        Points points;
 
         points.push_back(p);
         for (size_t i = 0; i < points.size(); ++i)
@@ -766,6 +774,7 @@ namespace textcanvas
                 }
             }
         }
+
         m_pos.x = x;
         m_pos.y = y;
     }

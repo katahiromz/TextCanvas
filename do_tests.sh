@@ -5,6 +5,7 @@
 ./build/FillEllipseTest.exe > TestResults/FillEllipseTest.txt
 ./build/FillPieTest.exe > TestResults/FillPieTest.txt
 ./build/FillRoundRectTest.exe > TestResults/FillRoundRectTest.txt
+./build/FloodFillTest.exe > TestResults/FloodFillTest.txt
 ./build/LineTest.exe > TestResults/LineTest.txt
 ./build/NormalizeRadianTest.exe > TestResults/NormalizeRadianTest.txt
 ./build/PieTest.exe > TestResults/PieTest.txt
