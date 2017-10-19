@@ -259,8 +259,8 @@ namespace textcanvas
         void clear(color_t ch);
         void reset(coord_t width, coord_t height);
         void reset(coord_t width, coord_t height, color_t ch);
-        void resize(coord_t width, coord_t height);
-        void resize(coord_t width, coord_t height, color_t ch);
+        void resize(coord_t width_, coord_t height_);
+        void resize(coord_t width_, coord_t height_, color_t ch);
 
         color_t get_pixel(coord_t x, coord_t y) const;
         color_t get_pixel(const Point& p) const;
@@ -424,6 +424,11 @@ namespace textcanvas
         void fill_polygon_winding(const Points& points, T_PUTTER& putter);
 
         void swap(TextCanvas& other);
+
+        void rotate_left(const TextCanvas& other);
+        void rotate_left();
+        void rotate_right(const TextCanvas& other);
+        void rotate_right();
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -585,7 +590,7 @@ namespace textcanvas
 
     bool XbmImage::in_range(coord_t x, coord_t y) const
     {
-        return 0 <= x && x < m_width && 0 <= y && y < m_height;
+        return 0 <= x && x < width() && 0 <= y && y < height();
     }
 
     inline bool XbmImage::get_dot(coord_t x, coord_t y) const
@@ -593,7 +598,7 @@ namespace textcanvas
         if (!in_range(x, y))
             return false;
 
-        value_type byte = m_data[m_stride * y + x / 8];
+        value_type byte = data()[stride() * y + x / 8];
         return (byte & (1 << (x & 7))) != 0;
     }
     inline void XbmImage::set_dot(coord_t x, coord_t y, bool dot)
@@ -601,16 +606,17 @@ namespace textcanvas
         if (!in_range(x, y))
             return;
 
-        value_type byte = m_data[m_stride * y + x / 8];
+        value_type byte = data()[stride() * y + x / 8];
         coord_t shift = x & 7;
         if (dot)
             byte |= (1 << shift);
         else
             byte &= ~(1 << shift);
-        m_data[m_stride * y + x] = byte;
+        data()[stride() * y + x] = byte;
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // internal methods
 
     inline TextCanvas::TextCanvas()
         : m_width(0), m_height(0), m_text(),
@@ -643,9 +649,9 @@ namespace textcanvas
           m_text(binary.width() * binary.height(), 0),
           m_fore_color(fore_color), m_back_color(back_color), m_pos(0, 0)
     {
-        for (coord_t y = 0; y < m_height; ++y)
+        for (coord_t y = 0; y < height(); ++y)
         {
-            for (coord_t x = 0; x < m_width; ++x)
+            for (coord_t x = 0; x < width(); ++x)
             {
                 if (binary.get_dot(x, y))
                     put_pixel(x, y, fore_color);
@@ -680,30 +686,21 @@ namespace textcanvas
     }
     inline color_t& TextCanvas::operator[](size_t index)
     {
-        return m_text[index];
+        return data()[index];
     }
     inline const color_t& TextCanvas::operator[](size_t index) const
     {
-        return m_text[index];
+        return data()[index];
     }
-
     inline string_type TextCanvas::to_str() const
     {
         string_type ret;
-        for (coord_t y = 0; y < m_height; ++y)
+        for (coord_t y = 0; y < height(); ++y)
         {
-            ret += m_text.substr(y * m_width, m_width);
+            ret += data().substr(y * width(), width());
             ret += newline;
         }
         return ret;
-    }
-    inline bool TextCanvas::in_range(coord_t x, coord_t y) const
-    {
-        return (0 <= x && x < m_width && 0 <= y && y < m_height);
-    }
-    inline bool TextCanvas::in_range(const Point& p) const
-    {
-        return in_range(p.x, p.y);
     }
 
     inline string_type& TextCanvas::data()
@@ -714,18 +711,9 @@ namespace textcanvas
     {
         return m_text;
     }
-    inline bool TextCanvas::same_size(const TextCanvas& tc) const
-    {
-        return m_width == tc.m_width && m_height == tc.m_height;
-    }
-
     inline void TextCanvas::clear(color_t ch)
     {
-        m_text.assign(m_width * m_height, ch);
-    }
-    inline void TextCanvas::clear()
-    {
-        clear(m_back_color);
+        m_text.assign(width() * height(), ch);
     }
 
     inline void TextCanvas::reset(coord_t width, coord_t height, color_t ch)
@@ -735,37 +723,29 @@ namespace textcanvas
         m_text.assign(width * height, ch);
         m_pos.x = m_pos.y = 0;
     }
-    inline void TextCanvas::reset(coord_t width, coord_t height)
-    {
-        reset(width, height, m_back_color);
-    }
 
-    inline void TextCanvas::resize(coord_t width, coord_t height, color_t ch)
+    inline void TextCanvas::resize(coord_t width_, coord_t height_, color_t ch)
     {
-        const coord_t min_width = std::min(m_width, width);
-        const coord_t min_height = std::min(m_height, height);
-        string_type str(width * height, ch);
+        const coord_t min_width = std::min(width(), width_);
+        const coord_t min_height = std::min(height(), height_);
+        string_type str(width_ * height_, ch);
         for (coord_t y = 0; y < min_height; ++y)
         {
             for (coord_t x = 0; x < min_width; ++x)
             {
-                str[y * width + x] = m_text[y * m_width + x];
+                str[y * width_ + x] = m_text[y * width() + x];
             }
         }
         std::swap(str, m_text);
-        m_width = width;
-        m_height = height;
-    }
-    inline void TextCanvas::resize(coord_t width, coord_t height)
-    {
-        resize(width, height, m_back_color);
+        m_width = width_;
+        m_height = height_;
     }
 
     inline color_t TextCanvas::get_pixel(coord_t x, coord_t y) const
     {
         if (in_range(x, y))
         {
-            return m_text[y * m_width + x];
+            return m_text[y * width() + x];
         }
         return m_back_color;
     }
@@ -777,7 +757,7 @@ namespace textcanvas
     {
         if (in_range(x, y))
         {
-            m_text[y * m_width + x] = ch;
+            m_text[y * width() + x] = ch;
         }
         m_pos.x = x;
         m_pos.y = y;
@@ -793,6 +773,16 @@ namespace textcanvas
     inline void TextCanvas::put_pixel(const Point& p)
     {
         put_pixel(p, m_fore_color);
+    }
+
+    inline void TextCanvas::swap(TextCanvas& other)
+    {
+        std::swap(m_width, other.m_width);
+        std::swap(m_height, other.m_height);
+        std::swap(m_text, other.m_text);
+        std::swap(m_fore_color, other.m_fore_color);
+        std::swap(m_back_color, other.m_back_color);
+        std::swap(m_pos, other.m_pos);
     }
 
     inline color_t TextCanvas::fore_color() const
@@ -811,6 +801,36 @@ namespace textcanvas
     inline void TextCanvas::back_color(color_t ch)
     {
         m_back_color = ch;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    inline bool TextCanvas::in_range(coord_t x, coord_t y) const
+    {
+        return (0 <= x && x < width() && 0 <= y && y < height());
+    }
+    inline bool TextCanvas::in_range(const Point& p) const
+    {
+        return in_range(p.x, p.y);
+    }
+
+    inline bool TextCanvas::same_size(const TextCanvas& tc) const
+    {
+        return width() == tc.width() && height() == tc.height();
+    }
+
+    inline void TextCanvas::clear()
+    {
+        clear(back_color());
+    }
+    inline void TextCanvas::reset(coord_t width, coord_t height)
+    {
+        reset(width, height, back_color());
+    }
+
+    inline void TextCanvas::resize(coord_t width_, coord_t height_)
+    {
+        resize(width_, height_, back_color());
     }
 
     inline TextCanvas operator!(const TextCanvas& bin)
@@ -860,7 +880,7 @@ namespace textcanvas
         {
             if (bin[i])
             {
-                m_text[i] = m_fore_color;
+                data()[i] = fore_color();
             }
         }
     }
@@ -872,7 +892,7 @@ namespace textcanvas
         {
             if (mask[i] && image[i])
             {
-                m_text[i] = image[i];
+                data()[i] = image[i];
             }
         }
     }
@@ -933,8 +953,8 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom)
     {
-        ColorPutter fore(*this, m_fore_color);
-        ColorPutter back(*this, m_back_color);
+        ColorPutter fore(*this, fore_color());
+        ColorPutter back(*this, back_color());
         put_subimage(x0, y0, image, x_zoom, y_zoom, fore, back);
     }
     template <typename T_PUTTER0, typename T_PUTTER1>
@@ -986,8 +1006,8 @@ namespace textcanvas
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
                                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
     {
-        ColorPutter fore(*this, m_fore_color);
-        ColorPutter back(*this, m_back_color);
+        ColorPutter fore(*this, fore_color());
+        ColorPutter back(*this, back_color());
         put_subimage(x0, y0, image, qx0, qy0, qx1, qy1, x_zoom, y_zoom, fore, back);
     }
     template <typename T_PUTTER0, typename T_PUTTER1>
@@ -1135,6 +1155,7 @@ namespace textcanvas
             if (get_pixel(p) == surface_ch)
                 points.push_back(p);
         }
+
         m_pos.x = x;
         m_pos.y = y;
     }
@@ -1210,6 +1231,7 @@ namespace textcanvas
                 y0 += sy;
             }
         }
+
         m_pos.x = x1;
         m_pos.y = y1;
     }
@@ -1230,6 +1252,7 @@ namespace textcanvas
         line(x1, y0, x1, y1, putter);
         line(x1, y1, x0, y1, putter);
         line(x0, y1, x0, y0, putter);
+
         m_pos.x = x1;
         m_pos.y = y1;
     }
@@ -1253,12 +1276,12 @@ namespace textcanvas
             std::swap(y0, y1);
         if (x0 < 0)
             x0 = 0;
-        if (x1 > m_width)
-            x1 = m_width - 1;
+        if (x1 > width())
+            x1 = width() - 1;
         if (y0 < 0)
             y0 = 0;
-        if (y1 > m_height)
-            y1 = m_height - 1;
+        if (y1 > height())
+            y1 = height() - 1;
         for (coord_t y = y0; y <= y1; ++y)
         {
             for (coord_t x = x0; x <= x1; ++x)
@@ -1266,6 +1289,7 @@ namespace textcanvas
                 putter(x, y);
             }
         }
+
         m_pos.x = x2;
         m_pos.y = y2;
     }
@@ -1303,6 +1327,7 @@ namespace textcanvas
             ++y;
             f += 4 * y + 2;
         }
+
         m_pos.x = x0;
         m_pos.y = y0;
     }
@@ -1342,6 +1367,7 @@ namespace textcanvas
             ++y;
             f += 4 * y + 2;
         }
+
         m_pos.x = x0;
         m_pos.y = y0;
     }
@@ -1368,6 +1394,7 @@ namespace textcanvas
                     putter(x, y);
                 }
             }
+
             m_pos.x = do_round(px);
             m_pos.y = do_round(py);
             return;
@@ -1479,6 +1506,7 @@ namespace textcanvas
                     putter(x, y);
                 }
             }
+
             m_pos.x = do_round(px);
             m_pos.y = do_round(py);
             return;
@@ -2126,16 +2154,6 @@ namespace textcanvas
             fill_polygon_alternate(num_points, points, putter);
         else
             fill_polygon_winding(num_points, points, putter);
-    }
-
-    inline void TextCanvas::swap(TextCanvas& other)
-    {
-        std::swap(m_width, other.m_width);
-        std::swap(m_height, other.m_height);
-        std::swap(m_text, other.m_text);
-        std::swap(m_fore_color, other.m_fore_color);
-        std::swap(m_back_color, other.m_back_color);
-        std::swap(m_pos, other.m_pos);
     }
 } // namespace textcanvas
 
