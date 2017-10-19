@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    22  // Version 22
+#define TEXT_CANVAS_HPP_    23  // Version 23
 
 #if _MSC_VER > 1000
     #pragma once
@@ -312,6 +312,8 @@ namespace textcanvas
 
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
+        void put_text(const Point& p0, const XbmFont& font, const string_type& text);
+        void put_text(const Point& p0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
 
         void get_text_extent(Point& size, const XbmFont& font, const string_type& text) const;
         void get_text_extent(Point& size, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom) const;
@@ -1098,6 +1100,14 @@ namespace textcanvas
             put_char(x0, y0, font, text[i], x_zoom, y_zoom);
             x0 += font.cell_width() * x_zoom;
         }
+    }
+    inline void TextCanvas::put_text(const Point& p0, const XbmFont& font, const string_type& text)
+    {
+        put_text(p0.x, p0.y, font, text);
+    }
+    inline void TextCanvas::put_text(const Point& p0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom)
+    {
+        put_text(p0.x, p0.y, font, text, x_zoom, y_zoom);
     }
 
     inline void TextCanvas::get_text_extent(Point& size, const XbmFont& font, const string_type& text) const
