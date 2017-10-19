@@ -13,6 +13,7 @@ LineTest
 NormalizeRadianTest
 PieTest
 PolygonTest
+RotateTest
 RoundRectTest
 SubImageTest
 TextOutTest
@@ -27,6 +28,7 @@ LineTest.exe
 NormalizeRadianTest.exe
 PieTest.exe
 PolygonTest.exe
+RotateTest.exe
 RoundRectTest.exe
 SubImageTest.exe
 TextOutTest.exe

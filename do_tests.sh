@@ -10,6 +10,7 @@
 ./build/NormalizeRadianTest.exe > TestResults/NormalizeRadianTest.txt
 ./build/PieTest.exe > TestResults/PieTest.txt
 ./build/PolygonTest.exe > TestResults/PolygonTest.txt
+./build/RotateTest.exe > TestResults/RotateTest.txt
 ./build/RoundRectTest.exe > TestResults/RoundRectTest.txt
 ./build/SubImageTest.exe > TestResults/SubImageTest.txt
 ./build/TextOutTest.exe > TestResults/TextOutTest.txt

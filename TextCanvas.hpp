@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    20  // Version 20
+#define TEXT_CANVAS_HPP_    21  // Version 21
 
 #if _MSC_VER > 1000
     #pragma once
@@ -426,8 +426,9 @@ namespace textcanvas
         void swap(TextCanvas& other);
 
         void rotate_left(const TextCanvas& other);
-        void rotate_left();
         void rotate_right(const TextCanvas& other);
+
+        void rotate_left();
         void rotate_right();
     };
 
@@ -2154,6 +2155,42 @@ namespace textcanvas
             fill_polygon_alternate(num_points, points, putter);
         else
             fill_polygon_winding(num_points, points, putter);
+    }
+
+    inline void TextCanvas::rotate_left(const TextCanvas& other)
+    {
+        reset(other.height(), other.width());
+        for (coord_t y = 0; y < other.width(); ++y)
+        {
+            for (coord_t x = 0; x < other.height(); ++x)
+            {
+                put_pixel(x, y, other.get_pixel(other.width() - (y + 1), x));
+            }
+        }
+    }
+    inline void TextCanvas::rotate_right(const TextCanvas& other)
+    {
+        reset(other.height(), other.width());
+        for (coord_t y = 0; y < other.width(); ++y)
+        {
+            for (coord_t x = 0; x < other.height(); ++x)
+            {
+                put_pixel(x, y, other.get_pixel(y, other.height() - (x + 1)));
+            }
+        }
+    }
+
+    inline void TextCanvas::rotate_left()
+    {
+        TextCanvas other;
+        other.rotate_left(*this);
+        swap(other);
+    }
+    inline void TextCanvas::rotate_right()
+    {
+        TextCanvas other;
+        other.rotate_right(*this);
+        swap(other);
     }
 } // namespace textcanvas
 
