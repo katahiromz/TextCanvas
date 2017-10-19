@@ -130,7 +130,7 @@ namespace textcanvas
         }
 
         void assign(coord_t width, coord_t height,
-                    const void *data, void *alloc = NULL);
+                    const void *data = NULL, void *alloc = NULL);
 
         value_type *cast(const void *data) const
         {
@@ -165,7 +165,7 @@ namespace textcanvas
         bool in_range(coord_t x, coord_t y) const;
 
         bool get_dot(coord_t x, coord_t y) const;
-        void set_dot(coord_t x, coord_t y, bool dot);
+        void put_dot(coord_t x, coord_t y, bool dot);
 
         std::string to_str(const char *name) const;
 
@@ -333,6 +333,7 @@ namespace textcanvas
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
 
         void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+        void get_subimage(XbmImage& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
 
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
         void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
@@ -666,7 +667,7 @@ namespace textcanvas
         value_type byte = data()[stride() * y + x / 8];
         return (byte & (1 << (x & 7))) != 0;
     }
-    inline void XbmImage::set_dot(coord_t x, coord_t y, bool dot)
+    inline void XbmImage::put_dot(coord_t x, coord_t y, bool dot)
     {
         if (!in_range(x, y))
             return;
@@ -1081,6 +1082,33 @@ namespace textcanvas
             {
                 color_t ch = get_pixel(x, y);
                 image.put_pixel(px, py, ch);
+                ++px;
+            }
+            ++py;
+        }
+    }
+    inline void TextCanvas::get_subimage(XbmImage& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const
+    {
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t width = x1 - x0 + 1;
+        coord_t height = y1 - y0 + 1;
+        if (image.width() != width || image.height() != height)
+        {
+            image.assign(width, height);
+        }
+
+        coord_t py = 0;
+        for (coord_t y = y0; y <= y1; ++y)
+        {
+            coord_t px = 0;
+            for (coord_t x = x0; x <= x1; ++x)
+            {
+                color_t ch = get_pixel(x, y);
+                image.put_dot(px, py, ch == fore_color());
                 ++px;
             }
             ++py;
