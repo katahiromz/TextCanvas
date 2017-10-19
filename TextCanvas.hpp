@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    18  // Version 18
+#define TEXT_CANVAS_HPP_    19  // Version 19
 
 #if _MSC_VER > 1000
     #pragma once
@@ -285,16 +285,25 @@ namespace textcanvas
 
         void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
 
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
+        template <typename T_PUTTER0, typename T_PUTTER1>
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, T_PUTTER0& fore, T_PUTTER1& back);
 
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom);
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom);
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom);
+        template <typename T_PUTTER0, typename T_PUTTER1>
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom,
+                          T_PUTTER0& fore, T_PUTTER1& back);
 
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image,
                           coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
         void put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
                           coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
+        template <typename T_PUTTER0, typename T_PUTTER1>
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
+                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom,
+                          T_PUTTER0& fore, T_PUTTER1& back);
 
         void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code);
         void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code, coord_t x_zoom, coord_t y_zoom);
@@ -897,6 +906,11 @@ namespace textcanvas
     {
         put_subimage(x0, y0, image, 1, 1);
     }
+    template <typename T_PUTTER0, typename T_PUTTER1>
+    void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, T_PUTTER0& fore, T_PUTTER1& back)
+    {
+        put_subimage(x0, y0, image, 1, 1, fore, back);
+    }
 
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
     {
@@ -917,16 +931,28 @@ namespace textcanvas
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom)
     {
+        ColorPutter fore(*this, m_fore_color);
+        ColorPutter back(*this, m_back_color);
+        put_subimage(x0, y0, image, x_zoom, y_zoom, fore, back);
+    }
+    template <typename T_PUTTER0, typename T_PUTTER1>
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
+                                         coord_t x_zoom, coord_t y_zoom,
+                                         T_PUTTER0& fore, T_PUTTER1& back)
+    {
         for (coord_t py = 0; py < image.height(); ++py)
         {
             for (coord_t px = 0; px < image.width(); ++px)
             {
-                color_t ch = (image.get_dot(px, py) ? fore_color() : back_color());
+                bool flag = image.get_dot(px, py);
                 for (coord_t y2 = 0; y2 < y_zoom; ++y2)
                 {
                     for (coord_t x2 = 0; x2 < x_zoom; ++x2)
                     {
-                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
+                        if (flag)
+                            fore(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
+                        else
+                            back(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
                     }
                 }
             }
@@ -958,6 +984,16 @@ namespace textcanvas
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
                                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
     {
+        ColorPutter fore(*this, m_fore_color);
+        ColorPutter back(*this, m_back_color);
+        put_subimage(x0, y0, image, qx0, qy0, qx1, qy1, x_zoom, y_zoom, fore, back);
+    }
+    template <typename T_PUTTER0, typename T_PUTTER1>
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
+                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1,
+                                         coord_t x_zoom, coord_t y_zoom,
+                                         T_PUTTER0& fore, T_PUTTER1& back)
+    {
         if (qx0 > qx1)
             std::swap(qx0, qx1);
         if (qy0 > qy1)
@@ -966,12 +1002,15 @@ namespace textcanvas
         {
             for (coord_t px = 0, qx = qx0; qx <= qx1; ++px, ++qx)
             {
-                color_t ch = (image.get_dot(qx, qy) ? m_fore_color : m_back_color);
+                bool flag = image.get_dot(qx, qy);
                 for (coord_t y2 = 0; y2 < y_zoom; ++y2)
                 {
                     for (coord_t x2 = 0; x2 < x_zoom; ++x2)
                     {
-                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
+                        if (flag)
+                            fore(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
+                        else
+                            back(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
                     }
                 }
             }
