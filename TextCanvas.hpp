@@ -599,9 +599,9 @@ namespace textcanvas
         value_type byte = m_data[m_stride * y + x / 8];
         coord_t shift = x & 7;
         if (dot)
-            byte |= value_type(1 << shift);
+            byte |= (1 << shift);
         else
-            byte &= ~value_type(1 << shift);
+            byte &= ~(1 << shift);
         m_data[m_stride * y + x] = byte;
     }
 
