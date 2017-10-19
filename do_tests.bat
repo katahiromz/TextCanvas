@@ -11,3 +11,4 @@
 .\build\PolygonTest > TestResults\PolygonTest.txt
 .\build\RoundRectTest > TestResults\RoundRectTest.txt
 .\build\SubImageTest > TestResults\SubImage.txt
+.\build\TextOutTest > TestResults\TextOutTest.txt

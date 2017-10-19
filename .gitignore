@@ -15,6 +15,7 @@ PieTest
 PolygonTest
 RoundRectTest
 SubImageTest
+TextOutTest
 ArcTest.exe
 CircleTest.exe
 EllipseTest.exe
@@ -28,6 +29,7 @@ PieTest.exe
 PolygonTest.exe
 RoundRectTest.exe
 SubImageTest.exe
+TextOutTest.exe
 *.res
 *.tds
 Debug

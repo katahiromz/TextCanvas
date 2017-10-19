@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    16  // Version 16
+#define TEXT_CANVAS_HPP_    17  // Version 17
 
 #if _MSC_VER > 1000
     #pragma once
@@ -11,7 +11,7 @@
 #include <string>       // for std::string
 #include <vector>       // for std::vector
 #include <set>          // for std::set
-#include <algorithm>    // for std::swap, std::find
+#include <algorithm>    // for std::swap
 #include <cmath>        // for std::sqrt, std::atan2, std::fmod, ...
 #include <cassert>      // for assert macro
 
@@ -100,6 +100,129 @@ namespace textcanvas
     bool check_range(double at, bool clockwise, double a0, double a1);
 
     ///////////////////////////////////////////////////////////////////////////
+    // XbmImage
+
+    class XbmImage
+    {
+    public:
+        typedef unsigned char value_type;
+
+        XbmImage(coord_t width, coord_t height, const void *data)
+            : m_data(reinterpret_cast<value_type *>(const_cast<void *>(data))), 
+              m_width(width), m_height(height)
+        {
+            assert(sizeof(value_type) == 1);
+            m_stride = (width + 7) / 8;
+        }
+
+        coord_t width() const
+        {
+            return m_width;
+        }
+        coord_t height() const
+        {
+            return m_height;
+        }
+        coord_t stride() const
+        {
+            return m_stride;
+        }
+        value_type *data()
+        {
+            return m_data;
+        }
+        const value_type *data() const
+        {
+            return m_data;
+        }
+
+        bool in_range(coord_t x, coord_t y) const;
+
+        bool get_dot(coord_t x, coord_t y) const;
+        void set_dot(coord_t x, coord_t y, bool dot);
+
+    protected:
+        value_type *m_data;
+        coord_t     m_width;
+        coord_t     m_height;
+        coord_t     m_stride;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // XbmFont
+
+    class XbmFont : public XbmImage
+    {
+    public:
+        XbmFont(coord_t width, coord_t height, const void *data,
+                coord_t columns, coord_t rows,
+                coord_t cell_width, coord_t cell_height)
+            : XbmImage(width, height, data),
+              m_columns(columns), m_rows(rows),
+              m_cell_width(cell_width), m_cell_height(cell_height)
+        {
+        }
+
+        coord_t columns() const
+        {
+            return m_columns;
+        }
+        coord_t rows() const
+        {
+            return m_rows;
+        }
+        coord_t cell_width() const
+        {
+            return m_cell_width;
+        }
+        coord_t cell_height() const
+        {
+            return m_cell_height;
+        }
+
+    protected:
+        coord_t m_columns;
+        coord_t m_rows;
+        coord_t m_cell_width;
+        coord_t m_cell_height;
+    };
+
+    #ifndef TEXTCANVAS_NO_N88_FONTS
+        inline const XbmFont& n88_graph_font()
+        {
+            #include "bitmaps/n88_graph_chars.xbm"
+            static const XbmFont n88_graph_chars(
+                n88_graph_chars_width, n88_graph_chars_height,
+                n88_graph_chars_bits, 256, 1, 8, 16);
+            return n88_graph_chars;
+        }
+        inline const XbmFont& n88_normal_font()
+        {
+            #include "bitmaps/n88_normal_chars.xbm"
+            static const XbmFont n88_normal_chars(
+                n88_normal_chars_width, n88_normal_chars_height,
+                n88_normal_chars_bits, 256, 1, 8, 16);
+            return n88_normal_chars;
+        }
+        inline const XbmFont& n88_quality_font()
+        {
+            #include "bitmaps/n88_quality_chars.xbm"
+            static const XbmFont n88_quality_chars(
+                n88_quality_chars_width, n88_quality_chars_height,
+                n88_quality_chars_bits, 256, 1, 8, 16);
+            return n88_quality_chars;
+        }
+        inline const XbmFont& n88_quarter_font()
+        {
+            #include "bitmaps/n88_quarter_chars.xbm"
+            static const XbmFont n88_quarter_chars(
+                n88_quarter_chars_width, n88_quarter_chars_height,
+                n88_quarter_chars_bits, 256, 1, 8, 16);
+            return n88_quarter_chars;
+        }
+    #endif
+
+    ///////////////////////////////////////////////////////////////////////////
     // TextCanvas
 
     class TextCanvas
@@ -107,6 +230,8 @@ namespace textcanvas
     public:
         TextCanvas();
         TextCanvas(coord_t width, coord_t height,
+                   color_t fore_color = asterisk, color_t back_color = space);
+        TextCanvas(const XbmImage& binary,
                    color_t fore_color = asterisk, color_t back_color = space);
         TextCanvas(const TextCanvas& tc);
         TextCanvas& operator=(const TextCanvas& tc);
@@ -163,9 +288,25 @@ namespace textcanvas
 
         void fill(const TextCanvas& bin);
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
+
         void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
+
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom);
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom);
+
+        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image,
+                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
+                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
+
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code);
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code, coord_t x_zoom, coord_t y_zoom);
+
+        void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
+        void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(const Point& p, color_t ch, bool surface = false);
@@ -435,6 +576,38 @@ namespace textcanvas
         return ret;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    bool XbmImage::in_range(coord_t x, coord_t y) const
+    {
+        return 0 <= x && x < m_width && 0 <= y && y < m_height;
+    }
+
+    inline bool XbmImage::get_dot(coord_t x, coord_t y) const
+    {
+        if (!in_range(x, y))
+            return false;
+
+        value_type byte = m_data[m_stride * y + x / 8];
+        coord_t shift = x % 8;
+        return (byte & (1 << shift)) != 0;
+    }
+    inline void XbmImage::set_dot(coord_t x, coord_t y, bool dot)
+    {
+        if (!in_range(x, y))
+            return;
+
+        value_type byte = m_data[m_stride * y + x / 8];
+        coord_t shift = x % 8;
+        if (dot)
+            byte |= value_type(1 << shift);
+        else
+            byte &= ~value_type(1 << shift);
+        m_data[m_stride * y + x] = byte;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
     inline TextCanvas::TextCanvas()
         : m_width(0), m_height(0), m_text(),
           m_fore_color(asterisk), m_back_color(space), m_pos(0, 0)
@@ -459,6 +632,23 @@ namespace textcanvas
         m_back_color = tc.m_back_color;
         m_pos = tc.m_pos;
         return *this;
+    }
+    inline TextCanvas::TextCanvas(const XbmImage& binary,
+                                  color_t fore_color, color_t back_color)
+        : m_width(binary.width()), m_height(binary.height()),
+          m_text(binary.width() * binary.height(), 0),
+          m_fore_color(fore_color), m_back_color(back_color), m_pos(0, 0)
+    {
+        for (coord_t y = 0; y < m_height; ++y)
+        {
+            for (coord_t x = 0; x < m_width; ++x)
+            {
+                if (binary.get_dot(x, y))
+                    put_pixel(x, y, fore_color);
+                else
+                    put_pixel(x, y, back_color);
+            }
+        }
     }
     inline TextCanvas::~TextCanvas()
     {
@@ -705,10 +895,16 @@ namespace textcanvas
             ++py;
         }
     }
+
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image)
     {
         put_subimage(x0, y0, image, 1, 1);
     }
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image)
+    {
+        put_subimage(x0, y0, image, 1, 1);
+    }
+
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
     {
         for (coord_t py = 0; py < image.height(); ++py)
@@ -724,6 +920,96 @@ namespace textcanvas
                     }
                 }
             }
+        }
+    }
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom)
+    {
+        for (coord_t py = 0; py < image.height(); ++py)
+        {
+            for (coord_t px = 0; px < image.width(); ++px)
+            {
+                color_t ch = (image.get_dot(px, py) ? fore_color() : back_color());
+                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
+                {
+                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
+                    {
+                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
+                    }
+                }
+            }
+        }
+    }
+
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image,
+                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
+    {
+        if (qx0 > qx1)
+            std::swap(qx0, qx1);
+        if (qy0 > qy1)
+            std::swap(qy0, qy1);
+        for (coord_t py = 0, qy = qy0; qy <= qy1; ++py, ++qy)
+        {
+            for (coord_t px = 0, qx = qx0; qx <= qx1; ++px, ++qx)
+            {
+                color_t ch = image.get_pixel(qx, qy);
+                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
+                {
+                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
+                    {
+                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
+                    }
+                }
+            }
+        }
+    }
+    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
+                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
+    {
+        if (qx0 > qx1)
+            std::swap(qx0, qx1);
+        if (qy0 > qy1)
+            std::swap(qy0, qy1);
+        for (coord_t py = 0, qy = qy0; qy <= qy1; ++py, ++qy)
+        {
+            for (coord_t px = 0, qx = qx0; qx <= qx1; ++px, ++qx)
+            {
+                color_t ch = (image.get_dot(qx, qy) ? m_fore_color : m_back_color);
+                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
+                {
+                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
+                    {
+                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
+                    }
+                }
+            }
+        }
+    }
+
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code, coord_t x_zoom, coord_t y_zoom)
+    {
+        coord_t iColumn = coord_t(char_code % font.columns());
+        coord_t iRow = coord_t(char_code / font.columns());
+        coord_t qx0 = iColumn * font.cell_width();
+        coord_t qy0 = iRow * font.cell_height();
+        coord_t qx1 = qx0 + font.cell_width() - 1;
+        coord_t qy1 = qy0 + font.cell_height() - 1;
+        put_subimage(x0, y0, font, qx0, qy0, qx1, qy1, x_zoom, y_zoom);
+    }
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code)
+    {
+        put_char(x0, y0, font, char_code, 1, 1);
+    }
+
+    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text)
+    {
+        put_text(x0, y0, font, text, 1, 1);
+    }
+    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom)
+    {
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            put_char(x0, y0, font, text[i], x_zoom, y_zoom);
+            x0 += font.cell_width() * x_zoom;
         }
     }
 

@@ -12,3 +12,4 @@
 ./build/PolygonTest.exe > TestResults/PolygonTest.txt
 ./build/RoundRectTest.exe > TestResults/RoundRectTest.txt
 ./build/SubImageTest.exe > TestResults/SubImageTest.txt
+./build/TextOutTest.exe > TestResults/TextOutTest.txt
