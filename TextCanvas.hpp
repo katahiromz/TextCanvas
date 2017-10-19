@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    24  // Version 24
+#define TEXT_CANVAS_HPP_    25  // Version 25
 
 #if _MSC_VER > 1000
     #pragma once
@@ -36,6 +36,13 @@ namespace textcanvas
     static const color_t space = color_t(' ');
     static const color_t newline = color_t('\n');
     static const color_t asterisk = color_t('*');
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    struct Point;
+    class XbmImage;
+        class XbmFont;
+    class TextCanvas;
 
     ///////////////////////////////////////////////////////////////////////////
     // Point and Points
