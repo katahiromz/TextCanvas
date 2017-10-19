@@ -427,9 +427,11 @@ namespace textcanvas
 
         void rotate_left(const TextCanvas& other);
         void rotate_right(const TextCanvas& other);
+        void rotate_180(const TextCanvas& other);
 
         void rotate_left();
         void rotate_right();
+        void rotate_180();
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -2153,7 +2155,8 @@ namespace textcanvas
         {
             for (coord_t x = 0; x < other.height(); ++x)
             {
-                put_pixel(x, y, other.get_pixel(other.width() - (y + 1), x));
+                color_t ch = other.get_pixel(other.width() - (y + 1), x);
+                put_pixel(x, y, ch);
             }
         }
     }
@@ -2164,7 +2167,20 @@ namespace textcanvas
         {
             for (coord_t x = 0; x < other.height(); ++x)
             {
-                put_pixel(x, y, other.get_pixel(y, other.height() - (x + 1)));
+                color_t ch = other.get_pixel(y, other.height() - (x + 1));
+                put_pixel(x, y, ch);
+            }
+        }
+    }
+    inline void TextCanvas::rotate_180(const TextCanvas& other)
+    {
+        reset(other.width(), other.height());
+        for (coord_t y = 0; y < other.height(); ++y)
+        {
+            for (coord_t x = 0; x < other.width(); ++x)
+            {
+                color_t ch = other.get_pixel(other.width() - (x + 1), other.height() - (y + 1));
+                put_pixel(x, y, ch);
             }
         }
     }
@@ -2179,6 +2195,12 @@ namespace textcanvas
     {
         TextCanvas other;
         other.rotate_right(*this);
+        swap(other);
+    }
+    inline void TextCanvas::rotate_180()
+    {
+        TextCanvas other;
+        other.rotate_180(*this);
         swap(other);
     }
 } // namespace textcanvas
