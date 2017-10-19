@@ -10,7 +10,18 @@ int main(void)
     std::cout << canvas.to_str();
     canvas.rotate_right();
     std::cout << canvas.to_str();
+
     canvas.rotate_180();
     std::cout << canvas.to_str();
+    canvas.rotate_180();
+
+    canvas.mirror_h();
+    std::cout << canvas.to_str();
+    canvas.mirror_h();
+
+    canvas.mirror_v();
+    std::cout << canvas.to_str();
+    canvas.mirror_v();
+
     return 0;
 }

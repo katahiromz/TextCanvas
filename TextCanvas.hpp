@@ -432,6 +432,12 @@ namespace textcanvas
         void rotate_left();
         void rotate_right();
         void rotate_180();
+
+        void mirror_h(const TextCanvas& other);
+        void mirror_v(const TextCanvas& other);
+
+        void mirror_h();
+        void mirror_v();
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -2201,6 +2207,44 @@ namespace textcanvas
     {
         TextCanvas other;
         other.rotate_180(*this);
+        swap(other);
+    }
+
+    inline void TextCanvas::mirror_h(const TextCanvas& other)
+    {
+        reset(other.width(), other.height());
+        for (coord_t y = 0; y < other.height(); ++y)
+        {
+            for (coord_t x = 0; x < other.width(); ++x)
+            {
+                color_t ch = other.get_pixel(other.width() - (x + 1), y);
+                put_pixel(x, y, ch);
+            }
+        }
+    }
+    inline void TextCanvas::mirror_v(const TextCanvas& other)
+    {
+        reset(other.width(), other.height());
+        for (coord_t y = 0; y < other.height(); ++y)
+        {
+            for (coord_t x = 0; x < other.width(); ++x)
+            {
+                color_t ch = other.get_pixel(x, other.height() - (y + 1));
+                put_pixel(x, y, ch);
+            }
+        }
+    }
+
+    inline void TextCanvas::mirror_h()
+    {
+        TextCanvas other;
+        other.mirror_h(*this);
+        swap(other);
+    }
+    inline void TextCanvas::mirror_v()
+    {
+        TextCanvas other;
+        other.mirror_v(*this);
         swap(other);
     }
 } // namespace textcanvas
