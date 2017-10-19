@@ -313,6 +313,8 @@ namespace textcanvas
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
 
+        void get_text_extent(Point& size, const XbmFont& font, const string_type& text) const;
+
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(const Point& p, color_t ch, bool surface = false);
         void flood_fill_bordered(coord_t x, coord_t y, color_t border_ch);
@@ -1095,6 +1097,12 @@ namespace textcanvas
             put_char(x0, y0, font, text[i], x_zoom, y_zoom);
             x0 += font.cell_width() * x_zoom;
         }
+    }
+
+    inline void TextCanvas::get_text_extent(Point& size, const XbmFont& font, const string_type& text) const
+    {
+        size.x = font.cell_width() * text.size();
+        size.y = font.cell_height();
     }
 
     inline void TextCanvas::flood_fill(coord_t x, coord_t y, color_t ch, bool surface)
