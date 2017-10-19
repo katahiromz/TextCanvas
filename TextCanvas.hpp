@@ -711,7 +711,11 @@ namespace textcanvas
         m_height = height;
         m_stride = (width + 7) / 8;
         coord_t total_size = m_stride * m_height;
-        if (!data && !alloc)
+        if (total_size == 0)
+        {
+            m_data = m_alloc = NULL;
+        }
+        else if (!data && !alloc)
         {
             m_data = m_alloc = cast(calloc(total_size, 1));
         }
