@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    19  // Version 19
+#define TEXT_CANVAS_HPP_    20  // Version 20
 
 #if _MSC_VER > 1000
     #pragma once
@@ -422,6 +422,8 @@ namespace textcanvas
         void fill_polygon_winding(size_t num_points, const Point *points, T_PUTTER& putter);
         template <typename T_PUTTER>
         void fill_polygon_winding(const Points& points, T_PUTTER& putter);
+
+        void swap(TextCanvas& other);
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -2125,7 +2127,26 @@ namespace textcanvas
         else
             fill_polygon_winding(num_points, points, putter);
     }
+
+    inline void TextCanvas::swap(TextCanvas& other)
+    {
+        std::swap(m_width, other.m_width);
+        std::swap(m_height, other.m_height);
+        std::swap(m_text, other.m_text);
+        std::swap(m_fore_color, other.m_fore_color);
+        std::swap(m_back_color, other.m_back_color);
+        std::swap(m_pos, other.m_pos);
+    }
 } // namespace textcanvas
+
+namespace std
+{
+    template <>
+    inline void swap(textcanvas::TextCanvas& left, textcanvas::TextCanvas& right)
+    {
+        left.swap(right);
+    }
+} // namespace std
 
 ///////////////////////////////////////////////////////////////////////////
 
