@@ -589,8 +589,7 @@ namespace textcanvas
             return false;
 
         value_type byte = m_data[m_stride * y + x / 8];
-        coord_t shift = x % 8;
-        return (byte & (1 << shift)) != 0;
+        return (byte & (1 << (x & 7))) != 0;
     }
     inline void XbmImage::set_dot(coord_t x, coord_t y, bool dot)
     {
@@ -598,7 +597,7 @@ namespace textcanvas
             return;
 
         value_type byte = m_data[m_stride * y + x / 8];
-        coord_t shift = x % 8;
+        coord_t shift = x & 7;
         if (dot)
             byte |= value_type(1 << shift);
         else
