@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    25  // Version 25
+#define TEXT_CANVAS_HPP_    26  // Version 26
 
 #if _MSC_VER > 1000
     #pragma once
@@ -108,14 +108,33 @@ namespace textcanvas
     public:
         typedef unsigned char value_type;
 
-        XbmImage(coord_t width, coord_t height, const void *data)
-            : m_data(reinterpret_cast<value_type *>(const_cast<void *>(data))), 
-              m_width(width), m_height(height)
+        XbmImage(coord_t width, coord_t height, const void *data, void *alloc = NULL)
+            : m_data(NULL), m_alloc(NULL)
         {
-            assert(width);
-            assert(height);
-            assert(sizeof(value_type) == 1);
-            m_stride = (width + 7) / 8;
+            assign(width, height, data, alloc);
+        }
+        XbmImage(const XbmImage& image) : m_data(NULL), m_alloc(NULL)
+        {
+            *this = image;
+        }
+        XbmImage& operator=(const XbmImage& image);
+        virtual ~XbmImage()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            free(m_alloc);
+            m_alloc = NULL;
+        }
+
+        void assign(coord_t width, coord_t height,
+                    const void *data, void *alloc = NULL);
+
+        value_type *cast(const void *data) const
+        {
+            return reinterpret_cast<value_type *>(const_cast<void *>(data));
         }
 
         coord_t width() const
@@ -129,6 +148,10 @@ namespace textcanvas
         coord_t stride() const
         {
             return m_stride;
+        }
+        coord_t size() const
+        {
+            return stride() * height();
         }
         value_type *data()
         {
@@ -148,6 +171,7 @@ namespace textcanvas
 
     protected:
         value_type *m_data;
+        value_type *m_alloc;
         coord_t     m_width;
         coord_t     m_height;
         coord_t     m_stride;
@@ -654,6 +678,54 @@ namespace textcanvas
         else
             byte &= ~(1 << shift);
         data()[stride() * y + x / 8] = byte;
+    }
+
+    inline XbmImage& XbmImage::operator=(const XbmImage& image)
+    {
+        if (image.m_alloc == NULL)
+        {
+            assign(image.width(), image.height(), image.m_data);
+        }
+        else
+        {
+            assign(image.width(), image.height(), NULL, image.m_alloc);
+        }
+        return *this;
+    }
+
+    inline void
+    XbmImage::assign(coord_t width, coord_t height,
+                     const void *data, void *alloc)
+    {
+        assert(width);
+        assert(height);
+        assert(sizeof(value_type) == 1);
+
+        clear();
+
+        m_width = width;
+        m_height = height;
+        m_stride = (width + 7) / 8;
+        coord_t total_size = m_stride * m_height;
+        if (!data && !alloc)
+        {
+            m_data = m_alloc = cast(calloc(total_size, 1));
+        }
+        else if (!data && alloc)
+        {
+            m_data = m_alloc = cast(malloc(total_size));
+            memcpy(m_data, alloc, total_size);
+        }
+        else if (data && !alloc)
+        {
+            m_data = cast(data);
+            m_alloc = NULL;
+        }
+        else if (data && alloc)
+        {
+            m_data = cast(data);
+            m_alloc = cast(alloc);
+        }
     }
 
     inline std::string XbmImage::to_str(const char *name) const
