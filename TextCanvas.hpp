@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    23  // Version 23
+#define TEXT_CANVAS_HPP_    24  // Version 24
 
 #if _MSC_VER > 1000
     #pragma once
@@ -105,6 +105,8 @@ namespace textcanvas
             : m_data(reinterpret_cast<value_type *>(const_cast<void *>(data))), 
               m_width(width), m_height(height)
         {
+            assert(width);
+            assert(height);
             assert(sizeof(value_type) == 1);
             m_stride = (width + 7) / 8;
         }
@@ -134,6 +136,8 @@ namespace textcanvas
 
         bool get_dot(coord_t x, coord_t y) const;
         void set_dot(coord_t x, coord_t y, bool dot);
+
+        std::string to_str(const char *name) const;
 
     protected:
         value_type *m_data;
@@ -181,17 +185,20 @@ namespace textcanvas
         coord_t m_cell_height;
     };
 
+    inline const XbmFont& qbasic_font()
+    {
+        // QBasic bitmap font
+        #include "bitmaps/qbasic_chars.xbm"
+        static const XbmFont qbasic_chars(
+            qbasic_chars_width, qbasic_chars_height,
+            qbasic_chars_bits, 16, 16, 8, 16);
+        return qbasic_chars;
+    }
+
     #ifndef TEXTCANVAS_NO_N88_FONTS
-        inline const XbmFont& n88_graph_font()
-        {
-            #include "bitmaps/n88_graph_chars.xbm"
-            static const XbmFont n88_graph_chars(
-                n88_graph_chars_width, n88_graph_chars_height,
-                n88_graph_chars_bits, 256, 1, 8, 16);
-            return n88_graph_chars;
-        }
         inline const XbmFont& n88_normal_font()
         {
+            // PC-8801 bitmap font
             #include "bitmaps/n88_normal_chars.xbm"
             static const XbmFont n88_normal_chars(
                 n88_normal_chars_width, n88_normal_chars_height,
@@ -200,14 +207,25 @@ namespace textcanvas
         }
         inline const XbmFont& n88_quality_font()
         {
+            // PC-9801 bitmap font
             #include "bitmaps/n88_quality_chars.xbm"
             static const XbmFont n88_quality_chars(
                 n88_quality_chars_width, n88_quality_chars_height,
                 n88_quality_chars_bits, 256, 1, 8, 16);
             return n88_quality_chars;
         }
+        inline const XbmFont& n88_graph_font()
+        {
+            // PC-8801 graphical bitmap font
+            #include "bitmaps/n88_graph_chars.xbm"
+            static const XbmFont n88_graph_chars(
+                n88_graph_chars_width, n88_graph_chars_height,
+                n88_graph_chars_bits, 256, 1, 8, 16);
+            return n88_graph_chars;
+        }
         inline const XbmFont& n88_quarter_font()
         {
+            // PC-9801 quarter bitmap font
             #include "bitmaps/n88_quarter_chars.xbm"
             static const XbmFont n88_quarter_chars(
                 n88_quarter_chars_width, n88_quarter_chars_height,
@@ -628,7 +646,51 @@ namespace textcanvas
             byte |= (1 << shift);
         else
             byte &= ~(1 << shift);
-        data()[stride() * y + x] = byte;
+        data()[stride() * y + x / 8] = byte;
+    }
+
+    inline std::string XbmImage::to_str(const char *name) const
+    {
+        std::string str;
+        char buf[32];
+
+        str += "#define ";
+        str += name;
+        str += "_width ";
+        sprintf(buf, "%u", (int)width());
+        str += buf;
+        str += "\n";
+
+        str += "#define ";
+        str += name;
+        str += "_height ";
+        sprintf(buf, "%u", (int)height());
+        str += buf;
+        str += "\n";
+
+        str += "static const unsigned char ";
+        str += name;
+        str += "_bits[] = {\n";
+
+        size_t i, k = 0;
+        for (i = 0; i < stride() * height() - 1; ++i)
+        {
+            if (k == 0)
+                str += "   ";
+            sprintf(buf, "0x%02x, ", data()[i]);
+            str += buf;
+            ++k;
+            if (k == 12)
+            {
+                k = 0;
+                str += "\n";
+            }
+        }
+        if (k == 0)
+            str += "  ";
+        sprintf(buf, "0x%02x };\n", data()[i]);
+        str += buf;
+        return str;
     }
 
     ///////////////////////////////////////////////////////////////////////////
