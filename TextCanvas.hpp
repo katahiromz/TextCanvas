@@ -804,6 +804,16 @@ namespace textcanvas
         m_back_color = ch;
     }
 
+    inline void TextCanvas::move_to(coord_t x, coord_t y)
+    {
+        m_pos.x = x;
+        m_pos.y = y;
+    }
+    inline void TextCanvas::move_to(const Point& p)
+    {
+        m_pos = p;
+    }
+
     ///////////////////////////////////////////////////////////////////////////
 
     inline bool TextCanvas::in_range(coord_t x, coord_t y) const
@@ -1124,8 +1134,7 @@ namespace textcanvas
             }
         }
 
-        m_pos.x = x;
-        m_pos.y = y;
+        move_to(x, y);
     }
     inline void TextCanvas::flood_fill_surface(coord_t x, coord_t y, color_t surface_ch)
     {
@@ -1157,8 +1166,7 @@ namespace textcanvas
                 points.push_back(p);
         }
 
-        m_pos.x = x;
-        m_pos.y = y;
+        move_to(x, y);
     }
     inline void TextCanvas::flood_fill_bordered(const Point& p, color_t border_ch)
     {
@@ -1169,28 +1177,18 @@ namespace textcanvas
         flood_fill_surface(p.x, p.y, surface_ch);
     }
 
-    inline void TextCanvas::move_to(coord_t x, coord_t y)
-    {
-        m_pos.x = x;
-        m_pos.y = y;
-    }
-    inline void TextCanvas::move_to(const Point& p)
-    {
-        m_pos = p;
-    }
-
     inline void TextCanvas::line_to(coord_t x, coord_t y)
     {
-        line(m_pos.x, m_pos.y, x, y);
+        line(pos().x, pos().y, x, y);
     }
     inline void TextCanvas::line_to(const Point& p)
     {
-        line(m_pos, p);
+        line(pos(), p);
     }
     template <typename T_PUTTER>
     inline void TextCanvas::line_to(coord_t x, coord_t y, T_PUTTER& putter)
     {
-        line(m_pos.x, m_pos.y, x, y, putter);
+        line(pos().x, pos().y, x, y, putter);
     }
     template <typename T_PUTTER>
     inline void TextCanvas::line_to(const Point& p, T_PUTTER& putter)
@@ -1233,8 +1231,7 @@ namespace textcanvas
             }
         }
 
-        m_pos.x = x1;
-        m_pos.y = y1;
+        move_to(x1, y1);
     }
 
     inline void TextCanvas::rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
@@ -1254,8 +1251,7 @@ namespace textcanvas
         line(x1, y1, x0, y1, putter);
         line(x0, y1, x0, y0, putter);
 
-        m_pos.x = x1;
-        m_pos.y = y1;
+        move_to(x1, y1);
     }
 
     inline void TextCanvas::fill_rectangle(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
@@ -1291,8 +1287,7 @@ namespace textcanvas
             }
         }
 
-        m_pos.x = x2;
-        m_pos.y = y2;
+        move_to(x2, y2);
     }
 
     inline void TextCanvas::circle(coord_t x0, coord_t y0, coord_t r)
@@ -1329,8 +1324,7 @@ namespace textcanvas
             f += 4 * y + 2;
         }
 
-        m_pos.x = x0;
-        m_pos.y = y0;
+        move_to(x0, y0);
     }
 
     inline void TextCanvas::fill_circle(coord_t x0, coord_t y0, coord_t r)
@@ -1369,8 +1363,7 @@ namespace textcanvas
             f += 4 * y + 2;
         }
 
-        m_pos.x = x0;
-        m_pos.y = y0;
+        move_to(x0, y0);
     }
 
     template <typename T_PUTTER>
@@ -1396,8 +1389,7 @@ namespace textcanvas
                 }
             }
 
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
+            move_to(do_round(px), do_round(py));
             return;
         }
 
@@ -1482,8 +1474,7 @@ namespace textcanvas
             y += 1;
         }
 
-        m_pos.x = do_round(px);
-        m_pos.y = do_round(py);
+        move_to(do_round(px), do_round(py));
     }
     template <typename T_PUTTER>
     inline void TextCanvas::fill_ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1, T_PUTTER& putter)
@@ -1508,8 +1499,7 @@ namespace textcanvas
                 }
             }
 
-            m_pos.x = do_round(px);
-            m_pos.y = do_round(py);
+            move_to(do_round(px), do_round(py));
             return;
         }
 
@@ -1599,8 +1589,7 @@ namespace textcanvas
             y += 1;
         }
 
-        m_pos.x = do_round(px);
-        m_pos.y = do_round(py);
+        move_to(do_round(px), do_round(py));
     }
 
     inline void TextCanvas::ellipse(coord_t x0, coord_t y0, coord_t x1, coord_t y1)
