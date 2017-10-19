@@ -683,13 +683,16 @@ namespace textcanvas
 
     inline XbmImage& XbmImage::operator=(const XbmImage& image)
     {
-        if (image.m_alloc == NULL)
+        if (this != &image)
         {
-            assign(image.width(), image.height(), image.m_data);
-        }
-        else
-        {
-            assign(image.width(), image.height(), NULL, image.m_alloc);
+            if (image.m_alloc == NULL)
+            {
+                assign(image.width(), image.height(), image.m_data);
+            }
+            else
+            {
+                assign(image.width(), image.height(), NULL, image.m_alloc);
+            }
         }
         return *this;
     }
