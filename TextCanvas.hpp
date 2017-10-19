@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    21  // Version 21
+#define TEXT_CANVAS_HPP_    22  // Version 22
 
 #if _MSC_VER > 1000
     #pragma once
@@ -305,8 +305,10 @@ namespace textcanvas
                           coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom,
                           T_PUTTER0& fore, T_PUTTER1& back);
 
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code);
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code, coord_t x_zoom, coord_t y_zoom);
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code);
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, coord_t x_zoom, coord_t y_zoom);
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow);
+        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, coord_t x_zoom, coord_t y_zoom);
 
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
@@ -1058,17 +1060,26 @@ namespace textcanvas
         }
     }
 
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code, coord_t x_zoom, coord_t y_zoom)
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow)
     {
-        coord_t iColumn = coord_t(char_code % font.columns());
-        coord_t iRow = coord_t(char_code / font.columns());
+        put_char(x0, y0, font, iColumn, iRow, 1, 1);
+    }
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, coord_t x_zoom, coord_t y_zoom)
+    {
         coord_t qx0 = iColumn * font.cell_width();
         coord_t qy0 = iRow * font.cell_height();
         coord_t qx1 = qx0 + font.cell_width() - 1;
         coord_t qy1 = qy0 + font.cell_height() - 1;
         put_subimage(x0, y0, font, qx0, qy0, qx1, qy1, x_zoom, y_zoom);
     }
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, size_t char_code)
+
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, coord_t x_zoom, coord_t y_zoom)
+    {
+        coord_t iColumn = coord_t(char_code % font.columns());
+        coord_t iRow = coord_t(char_code / font.columns());
+        put_char(x0, y0, font, iColumn, iRow, x_zoom, y_zoom);
+    }
+    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code)
     {
         put_char(x0, y0, font, char_code, 1, 1);
     }
