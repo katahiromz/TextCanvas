@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    17  // Version 17
+#define TEXT_CANVAS_HPP_    18  // Version 18
 
 #if _MSC_VER > 1000
     #pragma once
@@ -14,12 +14,6 @@
 #include <algorithm>    // for std::swap
 #include <cmath>        // for std::sqrt, std::atan2, std::fmod, ...
 #include <cassert>      // for assert macro
-
-#ifndef CXX11
-    #if __cplusplus >= 201103L
-        #define CXX11
-    #endif
-#endif
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -217,7 +211,7 @@ namespace textcanvas
             #include "bitmaps/n88_quarter_chars.xbm"
             static const XbmFont n88_quarter_chars(
                 n88_quarter_chars_width, n88_quarter_chars_height,
-                n88_quarter_chars_bits, 256, 1, 8, 16);
+                n88_quarter_chars_bits, 256, 1, 8, 8);
             return n88_quarter_chars;
         }
     #endif
