@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    26  // Version 26
+#define TEXT_CANVAS_HPP_    27  // Version 27
 
 #if _MSC_VER > 1000
     #pragma once
@@ -13,6 +13,7 @@
 #include <set>          // for std::set
 #include <algorithm>    // for std::swap
 #include <cmath>        // for std::sqrt, std::atan2, std::fmod, ...
+#include <cstring>      // for std::memset, std::memcpy, ...
 #include <cassert>      // for assert macro
 
 ///////////////////////////////////////////////////////////////////////////
@@ -57,6 +58,7 @@ namespace textcanvas
         {
         }
     };
+    typedef Point Size;
     typedef std::vector<Point> Points;
 
     inline bool operator==(const Point& p0, const Point& p1)
@@ -108,10 +110,10 @@ namespace textcanvas
     public:
         typedef unsigned char value_type;
 
-        XbmImage(coord_t width, coord_t height, const void *data, void *alloc = NULL)
-            : m_data(NULL), m_alloc(NULL)
+        XbmImage(coord_t width, coord_t height, const void *data = NULL,
+                 void *alloc = NULL) : m_data(NULL), m_alloc(NULL)
         {
-            assign(width, height, data, alloc);
+            reset(width, height, data, alloc);
         }
         XbmImage(const XbmImage& image) : m_data(NULL), m_alloc(NULL)
         {
@@ -125,12 +127,12 @@ namespace textcanvas
 
         void clear()
         {
-            free(m_alloc);
+            delete[] m_alloc;
             m_alloc = NULL;
         }
 
-        void assign(coord_t width, coord_t height,
-                    const void *data = NULL, void *alloc = NULL);
+        void reset(coord_t width, coord_t height,
+                   const void *data = NULL, void *alloc = NULL);
 
         value_type *cast(const void *data) const
         {
@@ -168,6 +170,11 @@ namespace textcanvas
         void put_dot(coord_t x, coord_t y, bool dot);
 
         std::string to_str(const char *name) const;
+
+        void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+        void get_subimage(XbmImage& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
+        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
 
     protected:
         value_type *m_data;
@@ -318,6 +325,9 @@ namespace textcanvas
         void put_pixel(coord_t x, coord_t y);
         void put_pixel(const Point& p);
 
+        bool get_dot(coord_t x, coord_t y) const;
+        void put_dot(coord_t x, coord_t y, bool dot);
+
         color_t fore_color() const;
         void fore_color(color_t ch);
 
@@ -333,40 +343,30 @@ namespace textcanvas
         void do_mask(const TextCanvas& image, const TextCanvas& mask);
 
         void get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+        void get_subimage(TextCanvas& image, Point& p0, Point& p1) const;
         void get_subimage(XbmImage& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const;
+        void get_subimage(XbmImage& image, Point& p0, Point& p1) const;
 
         void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image);
         void put_subimage(coord_t x0, coord_t y0, const XbmImage& image);
         template <typename T_PUTTER0, typename T_PUTTER1>
         void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, T_PUTTER0& fore, T_PUTTER1& back);
 
-        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom);
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom);
-        template <typename T_PUTTER0, typename T_PUTTER1>
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom,
-                          T_PUTTER0& fore, T_PUTTER1& back);
+        Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code);
+        Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow);
 
-        void put_subimage(coord_t x0, coord_t y0, const TextCanvas& image,
-                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
-                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom);
-        template <typename T_PUTTER0, typename T_PUTTER1>
-        void put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
-                          coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom,
-                          T_PUTTER0& fore, T_PUTTER1& back);
-
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code);
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, coord_t x_zoom, coord_t y_zoom);
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow);
-        void put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, coord_t x_zoom, coord_t y_zoom);
+        template <typename T_CONVERTER>
+        Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, T_CONVERTER& conv);
+        template <typename T_CONVERTER>
+        Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv);
 
         void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
-        void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
         void put_text(const Point& p0, const XbmFont& font, const string_type& text);
-        void put_text(const Point& p0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom);
 
-        void get_text_extent(Point& size, const XbmFont& font, const string_type& text) const;
-        void get_text_extent(Point& size, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom) const;
+        template <typename T_CONVERTER>
+        void put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, T_CONVERTER& conv);
+        template <typename T_CONVERTER>
+        void put_text(const Point& p0, const XbmFont& font, const string_type& text, T_CONVERTER& conv);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(const Point& p, color_t ch, bool surface = false);
@@ -490,6 +490,12 @@ namespace textcanvas
         void rotate_right();
         void rotate_180();
 
+        void stretch(const TextCanvas& other, coord_t width, coord_t height);
+        void stretch(coord_t width, coord_t height);
+
+        void stretch_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi);
+        void stretch_cross(coord_t x_multi, coord_t y_multi);
+
         void mirror_h(const TextCanvas& other);
         void mirror_v(const TextCanvas& other);
 
@@ -557,6 +563,66 @@ namespace textcanvas
             m_tc.put_pixel(x + 1, y);
             m_tc.put_pixel(x, y - 1);
             m_tc.put_pixel(x, y + 1);
+        }
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // image converters
+
+    struct NoneConverter
+    {
+        void operator()(TextCanvas& tc)
+        {
+        }
+    };
+    struct YokoNibaiKaku
+    {
+        void operator()(TextCanvas& tc)
+        {
+            tc.stretch_cross(2, 1);
+        }
+    };
+    struct TateNibaiKaku
+    {
+        void operator()(TextCanvas& tc)
+        {
+            tc.stretch_cross(1, 2);
+        }
+    };
+    struct YonBaiKaku
+    {
+        void operator()(TextCanvas& tc)
+        {
+            tc.stretch_cross(2, 2);
+        }
+    };
+    struct LeftRotator
+    {
+        void operator()(TextCanvas& tc)
+        {
+            tc.rotate_left();
+        }
+    };
+    struct RightRotator
+    {
+        void operator()(TextCanvas& tc)
+        {
+            tc.rotate_right();
+        }
+    };
+    template <typename T_LEFT_CONV, typename T_RIGHT_CONV>
+    struct PairConverter
+    {
+        T_LEFT_CONV& m_left;
+        T_RIGHT_CONV& m_right;
+        PairConverter(T_LEFT_CONV& left, T_RIGHT_CONV& right)
+            : m_left(left), m_right(right)
+        {
+        }
+        void operator()(TextCanvas& tc)
+        {
+            m_left(tc);
+            m_right(tc);
         }
     };
 
@@ -685,21 +751,13 @@ namespace textcanvas
     {
         if (this != &image)
         {
-            if (image.m_alloc == NULL)
-            {
-                assign(image.width(), image.height(), image.m_data);
-            }
-            else
-            {
-                assign(image.width(), image.height(), NULL, image.m_alloc);
-            }
+            reset(image.width(), image.height(), NULL, image.m_alloc);
         }
         return *this;
     }
 
     inline void
-    XbmImage::assign(coord_t width, coord_t height,
-                     const void *data, void *alloc)
+    XbmImage::reset(coord_t width, coord_t height, const void *data, void *alloc)
     {
         assert(width);
         assert(height);
@@ -717,11 +775,12 @@ namespace textcanvas
         }
         else if (!data && !alloc)
         {
-            m_data = m_alloc = cast(calloc(total_size, 1));
+            m_data = m_alloc = new value_type[total_size];
+            memset(m_data, 0, total_size);
         }
         else if (!data && alloc)
         {
-            m_data = m_alloc = cast(malloc(total_size));
+            m_data = m_alloc = new value_type[total_size];
             memcpy(m_data, alloc, total_size);
         }
         else if (data && !alloc)
@@ -778,6 +837,79 @@ namespace textcanvas
         sprintf(buf, "0x%02x };\n", data()[i]);
         str += buf;
         return str;
+    }
+
+    inline void XbmImage::get_subimage(TextCanvas& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const
+    {
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t width = x1 - x0 + 1;
+        coord_t height = y1 - y0 + 1;
+        if (width != image.width() || height != image.height())
+        {
+            image.reset(width, height);
+        }
+
+        coord_t py = 0;
+        for (coord_t y = y0; y <= y1; ++y)
+        {
+            coord_t px = 0;
+            for (coord_t x = x0; x <= x1; ++x)
+            {
+                image.put_dot(px, py, get_dot(x, y));
+                ++px;
+            }
+            ++py;
+        }
+    }
+    inline void XbmImage::get_subimage(XbmImage& image, coord_t x0, coord_t y0, coord_t x1, coord_t y1) const
+    {
+        if (x0 > x1)
+            std::swap(x0, x1);
+        if (y0 > y1)
+            std::swap(y0, y1);
+
+        coord_t width = x1 - x0 + 1;
+        coord_t height = y1 - y0 + 1;
+        if (width != image.width() || height != image.height())
+        {
+            image.reset(width, height);
+        }
+
+        coord_t py = 0;
+        for (coord_t y = y0; y <= y1; ++y)
+        {
+            coord_t px = 0;
+            for (coord_t x = x0; x <= x1; ++x)
+            {
+                image.put_dot(px, py, get_dot(x, y));
+                ++px;
+            }
+            ++py;
+        }
+    }
+    inline void XbmImage::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image)
+    {
+        for (coord_t y = 0; y < image.height(); ++y)
+        {
+            for (coord_t x = 0; x < image.width(); ++x)
+            {
+                put_dot(x0 + x, y0 + y, image.get_dot(x, y));
+            }
+        }
+    }
+    inline void XbmImage::put_subimage(coord_t x0, coord_t y0, const XbmImage& image)
+    {
+        for (coord_t y = 0; y < image.height(); ++y)
+        {
+            for (coord_t x = 0; x < image.width(); ++x)
+            {
+                put_dot(x0 + x, y0 + y, image.get_dot(x, y));
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -980,6 +1112,18 @@ namespace textcanvas
 
     ///////////////////////////////////////////////////////////////////////////
 
+    inline bool TextCanvas::get_dot(coord_t x, coord_t y) const
+    {
+        return get_pixel(x, y) == fore_color();
+    }
+    inline void TextCanvas::put_dot(coord_t x, coord_t y, bool dot)
+    {
+        if (dot)
+            put_pixel(x, y, fore_color());
+        else
+            put_pixel(x, y, back_color());
+    }
+
     inline bool TextCanvas::in_range(coord_t x, coord_t y) const
     {
         return (0 <= x && x < width() && 0 <= y && y < height());
@@ -1079,7 +1223,12 @@ namespace textcanvas
         if (y0 > y1)
             std::swap(y0, y1);
 
-        image.reset(x1 - x0 + 1, y1 - y0 + 1, 0);
+        coord_t width = x1 - x0 + 1;
+        coord_t height = y1 - y0 + 1;
+        if (width != image.width() || height != image.height())
+        {
+            image.reset(width, height);
+        }
 
         coord_t py = 0;
         for (coord_t y = y0; y <= y1; ++y)
@@ -1105,7 +1254,7 @@ namespace textcanvas
         coord_t height = y1 - y0 + 1;
         if (image.width() != width || image.height() != height)
         {
-            image.assign(width, height);
+            image.reset(width, height);
         }
 
         coord_t py = 0;
@@ -1114,188 +1263,114 @@ namespace textcanvas
             coord_t px = 0;
             for (coord_t x = x0; x <= x1; ++x)
             {
-                color_t ch = get_pixel(x, y);
-                image.put_dot(px, py, ch == fore_color());
+                image.put_dot(px, py, get_dot(x, y));
                 ++px;
             }
             ++py;
         }
     }
 
+    inline void TextCanvas::get_subimage(TextCanvas& image, Point& p0, Point& p1) const
+    {
+        get_subimage(image, p0.x, p0.y, p1.x, p1.y);
+    }
+    inline void TextCanvas::get_subimage(XbmImage& image, Point& p0, Point& p1) const
+    {
+        get_subimage(image, p0.x, p0.y, p1.x, p1.y);
+    }
+
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image)
     {
-        put_subimage(x0, y0, image, 1, 1);
+        for (coord_t py = 0; py < image.height(); ++py)
+        {
+            for (coord_t px = 0; px < image.width(); ++px)
+            {
+                put_pixel(x0 + px, y0 + py, image.get_pixel(px, py));
+            }
+        }
     }
     inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image)
     {
-        put_subimage(x0, y0, image, 1, 1);
+        for (coord_t py = 0; py < image.height(); ++py)
+        {
+            for (coord_t px = 0; px < image.width(); ++px)
+            {
+                put_dot(x0 + px, y0 + py, image.get_dot(px, py));
+            }
+        }
     }
+
     template <typename T_PUTTER0, typename T_PUTTER1>
     void put_subimage(coord_t x0, coord_t y0, const XbmImage& image, T_PUTTER0& fore, T_PUTTER1& back)
     {
-        put_subimage(x0, y0, image, 1, 1, fore, back);
-    }
-
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image, coord_t x_zoom, coord_t y_zoom)
-    {
         for (coord_t py = 0; py < image.height(); ++py)
         {
             for (coord_t px = 0; px < image.width(); ++px)
             {
-                color_t ch = image.get_pixel(px, py);
-                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
-                {
-                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
-                    {
-                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
-                    }
-                }
-            }
-        }
-    }
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image, coord_t x_zoom, coord_t y_zoom)
-    {
-        ColorPutter fore(*this, fore_color());
-        ColorPutter back(*this, back_color());
-        put_subimage(x0, y0, image, x_zoom, y_zoom, fore, back);
-    }
-    template <typename T_PUTTER0, typename T_PUTTER1>
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
-                                         coord_t x_zoom, coord_t y_zoom,
-                                         T_PUTTER0& fore, T_PUTTER1& back)
-    {
-        for (coord_t py = 0; py < image.height(); ++py)
-        {
-            for (coord_t px = 0; px < image.width(); ++px)
-            {
-                bool flag = image.get_dot(px, py);
-                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
-                {
-                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
-                    {
-                        if (flag)
-                            fore(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
-                        else
-                            back(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
-                    }
-                }
+                if (image.get_dot(px, py))
+                    fore(x0 + px, y0 + py);
+                else
+                    back(x0 + px, y0 + py);
             }
         }
     }
 
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const TextCanvas& image,
-                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
+    template <typename T_CONVERTER>
+    inline Size TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv)
     {
-        if (qx0 > qx1)
-            std::swap(qx0, qx1);
-        if (qy0 > qy1)
-            std::swap(qy0, qy1);
-        for (coord_t py = 0, qy = qy0; qy <= qy1; ++py, ++qy)
-        {
-            for (coord_t px = 0, qx = qx0; qx <= qx1; ++px, ++qx)
-            {
-                color_t ch = image.get_pixel(qx, qy);
-                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
-                {
-                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
-                    {
-                        put_pixel(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2, ch);
-                    }
-                }
-            }
-        }
-    }
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
-                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1, coord_t x_zoom, coord_t y_zoom)
-    {
-        ColorPutter fore(*this, fore_color());
-        ColorPutter back(*this, back_color());
-        put_subimage(x0, y0, image, qx0, qy0, qx1, qy1, x_zoom, y_zoom, fore, back);
-    }
-    template <typename T_PUTTER0, typename T_PUTTER1>
-    inline void TextCanvas::put_subimage(coord_t x0, coord_t y0, const XbmImage& image,
-                                         coord_t qx0, coord_t qy0, coord_t qx1, coord_t qy1,
-                                         coord_t x_zoom, coord_t y_zoom,
-                                         T_PUTTER0& fore, T_PUTTER1& back)
-    {
-        if (qx0 > qx1)
-            std::swap(qx0, qx1);
-        if (qy0 > qy1)
-            std::swap(qy0, qy1);
-        for (coord_t py = 0, qy = qy0; qy <= qy1; ++py, ++qy)
-        {
-            for (coord_t px = 0, qx = qx0; qx <= qx1; ++px, ++qx)
-            {
-                bool flag = image.get_dot(qx, qy);
-                for (coord_t y2 = 0; y2 < y_zoom; ++y2)
-                {
-                    for (coord_t x2 = 0; x2 < x_zoom; ++x2)
-                    {
-                        if (flag)
-                            fore(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
-                        else
-                            back(x0 + px * x_zoom + x2, y0 + py * y_zoom + y2);
-                    }
-                }
-            }
-        }
-    }
-
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow)
-    {
-        put_char(x0, y0, font, iColumn, iRow, 1, 1);
-    }
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, coord_t x_zoom, coord_t y_zoom)
-    {
+        assert(0 <= iColumn && iColumn < font.columns());
+        assert(0 <= iRow && iRow < font.rows());
         coord_t qx0 = iColumn * font.cell_width();
         coord_t qy0 = iRow * font.cell_height();
         coord_t qx1 = qx0 + font.cell_width() - 1;
         coord_t qy1 = qy0 + font.cell_height() - 1;
-        put_subimage(x0, y0, font, qx0, qy0, qx1, qy1, x_zoom, y_zoom);
+        TextCanvas tc;
+        font.get_subimage(tc, qx0, qy0, qx1, qy1);
+        conv(tc);
+        put_subimage(x0, y0, tc);
+        return Size(tc.width(), tc.height());
     }
-
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, coord_t x_zoom, coord_t y_zoom)
+    template <typename T_CONVERTER>
+    inline Size TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code, T_CONVERTER& conv)
     {
         coord_t iColumn = coord_t(char_code % font.columns());
         coord_t iRow = coord_t(char_code / font.columns());
-        put_char(x0, y0, font, iColumn, iRow, x_zoom, y_zoom);
+        return put_char(x0, y0, font, iColumn, iRow, conv);
     }
-    inline void TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code)
+    inline Size TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow)
     {
-        put_char(x0, y0, font, char_code, 1, 1);
+        NoneConverter conv;
+        return put_char(x0, y0, font, iColumn, iRow, conv);
+    }
+    inline Size TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code)
+    {
+        NoneConverter conv;
+        return put_char(x0, y0, font, char_code, conv);
     }
 
-    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text)
-    {
-        put_text(x0, y0, font, text, 1, 1);
-    }
-    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom)
+    template <typename T_CONVERTER>
+    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, T_CONVERTER& conv)
     {
         for (size_t i = 0; i < text.size(); ++i)
         {
-            put_char(x0, y0, font, text[i], x_zoom, y_zoom);
-            x0 += font.cell_width() * x_zoom;
+            x0 += put_char(x0, y0, font, text[i], conv).x;
+        }
+    }
+    template <typename T_CONVERTER>
+    inline void TextCanvas::put_text(const Point& p0, const XbmFont& font, const string_type& text, T_CONVERTER& conv)
+    {
+        put_text(p0.x, p0.y, font, text, conv);
+    }
+    inline void TextCanvas::put_text(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text)
+    {
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            x0 += put_char(x0, y0, font, text[i]).x;
         }
     }
     inline void TextCanvas::put_text(const Point& p0, const XbmFont& font, const string_type& text)
     {
         put_text(p0.x, p0.y, font, text);
-    }
-    inline void TextCanvas::put_text(const Point& p0, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom)
-    {
-        put_text(p0.x, p0.y, font, text, x_zoom, y_zoom);
-    }
-
-    inline void TextCanvas::get_text_extent(Point& size, const XbmFont& font, const string_type& text) const
-    {
-        size.x = font.cell_width() * text.size();
-        size.y = font.cell_height();
-    }
-    inline void TextCanvas::get_text_extent(Point& size, const XbmFont& font, const string_type& text, coord_t x_zoom, coord_t y_zoom) const
-    {
-        get_text_extent(size, font, text);
-        size.x *= x_zoom;
-        size.y *= y_zoom;
     }
 
     inline void TextCanvas::flood_fill(coord_t x, coord_t y, color_t ch, bool surface)
@@ -2459,6 +2534,57 @@ namespace textcanvas
         other.mirror_v(*this);
         swap(other);
     }
+
+    inline void TextCanvas::stretch(const TextCanvas& other, coord_t width, coord_t height)
+    {
+        reset(width, height);
+
+        for (coord_t py = 0; py < height; ++py)
+        {
+            for (coord_t px = 0; px < width; ++px)
+            {
+                coord_t qx = px * width / other.width();
+                coord_t qy = py * height / other.height();
+                color_t ch = other.get_pixel(qx, qy);
+                put_pixel(px, py, ch);
+            }
+        }
+    }
+    inline void TextCanvas::stretch_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi)
+    {
+        coord_t new_width = other.width() * x_multi;
+        coord_t new_height = other.height() * y_multi;
+        reset(new_width, new_height);
+
+        for (coord_t qy = 0; qy < other.height(); ++qy)
+        {
+            for (coord_t qx = 0; qx < other.width(); ++qx)
+            {
+                color_t ch = other.get_pixel(qx, qy);
+                for (coord_t y = 0; y < y_multi; ++y)
+                {
+                    for (coord_t x = 0; x < x_multi; ++x)
+                    {
+                        put_pixel(qx * x_multi + x, qy * y_multi + y, ch);
+                    }
+                }
+            }
+        }
+    }
+
+    inline void TextCanvas::stretch(coord_t width, coord_t height)
+    {
+        TextCanvas other;
+        other.stretch(*this, width, height);
+        swap(other);
+    }
+    inline void TextCanvas::stretch_cross(coord_t x_multi, coord_t y_multi)
+    {
+        TextCanvas other;
+        other.stretch_cross(*this, x_multi, y_multi);
+        swap(other);
+    }
+
 } // namespace textcanvas
 
 namespace std
