@@ -498,11 +498,14 @@ namespace textcanvas
         void rotate_right();
         void rotate_180();
 
-        void stretch(const TextCanvas& other, coord_t width, coord_t height);
-        void stretch(coord_t width, coord_t height);
+        void scale(const TextCanvas& other, coord_t width, coord_t height);
+        void scale(coord_t width, coord_t height);
 
-        void stretch_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi);
-        void stretch_cross(coord_t x_multi, coord_t y_multi);
+        void scale_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi);
+        void scale_cross(coord_t x_multi, coord_t y_multi);
+
+        void scale_percent(const TextCanvas& other, coord_t x_percent, coord_t y_percent);
+        void scale_percent(coord_t x_percent, coord_t y_percent);
 
         void mirror_h(const TextCanvas& other);
         void mirror_v(const TextCanvas& other);
@@ -587,21 +590,21 @@ namespace textcanvas
     {
         void operator()(TextCanvas& tc)
         {
-            tc.stretch_cross(2, 1);
+            tc.scale_cross(2, 1);
         }
     };
     struct TateNibaiKaku
     {
         void operator()(TextCanvas& tc)
         {
-            tc.stretch_cross(1, 2);
+            tc.scale_cross(1, 2);
         }
     };
     struct YonBaiKaku
     {
         void operator()(TextCanvas& tc)
         {
-            tc.stretch_cross(2, 2);
+            tc.scale_cross(2, 2);
         }
     };
     struct LeftRotator
@@ -2575,7 +2578,7 @@ namespace textcanvas
         swap(other);
     }
 
-    inline void TextCanvas::stretch(const TextCanvas& other, coord_t width, coord_t height)
+    inline void TextCanvas::scale(const TextCanvas& other, coord_t width, coord_t height)
     {
         reset(width, height);
 
@@ -2583,14 +2586,14 @@ namespace textcanvas
         {
             for (coord_t px = 0; px < width; ++px)
             {
-                coord_t qx = px * width / other.width();
-                coord_t qy = py * height / other.height();
+                coord_t qx = px * other.width() / width;
+                coord_t qy = py * other.height() / height;
                 color_t ch = other.get_pixel(qx, qy);
                 put_pixel(px, py, ch);
             }
         }
     }
-    inline void TextCanvas::stretch_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi)
+    inline void TextCanvas::scale_cross(const TextCanvas& other, coord_t x_multi, coord_t y_multi)
     {
         coord_t new_width = other.width() * x_multi;
         coord_t new_height = other.height() * y_multi;
@@ -2611,17 +2614,40 @@ namespace textcanvas
             }
         }
     }
+    inline void TextCanvas::scale_percent(const TextCanvas& other, coord_t x_percent, coord_t y_percent)
+    {
+        coord_t new_width = other.width() * x_percent / 100;
+        coord_t new_height = other.height() * y_percent / 100;
+        reset(new_width, new_height);
 
-    inline void TextCanvas::stretch(coord_t width, coord_t height)
+        for (coord_t py = 0; py < new_height; ++py)
+        {
+            for (coord_t px = 0; px < new_width; ++px)
+            {
+                coord_t qx = px * other.width() / new_width;
+                coord_t qy = py * other.height() / new_height;
+                color_t ch = other.get_pixel(qx, qy);
+                put_pixel(px, py, ch);
+            }
+        }
+    }
+
+    inline void TextCanvas::scale(coord_t width, coord_t height)
     {
         TextCanvas other;
-        other.stretch(*this, width, height);
+        other.scale(*this, width, height);
         swap(other);
     }
-    inline void TextCanvas::stretch_cross(coord_t x_multi, coord_t y_multi)
+    inline void TextCanvas::scale_cross(coord_t x_multi, coord_t y_multi)
     {
         TextCanvas other;
-        other.stretch_cross(*this, x_multi, y_multi);
+        other.scale_cross(*this, x_multi, y_multi);
+        swap(other);
+    }
+    inline void TextCanvas::scale_percent(coord_t x_percent, coord_t y_percent)
+    {
+        TextCanvas other;
+        other.scale_percent(*this, x_percent, y_percent);
         swap(other);
     }
 

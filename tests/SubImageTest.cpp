@@ -8,7 +8,7 @@ int main(void)
     canvas.line(10, 10, 25, 25);
     canvas.line(25, 10, 10, 25);
     canvas.get_subimage(subimage, 10, 10, 25, 25);
-    subimage2.stretch_cross(subimage, 2, 3);
+    subimage2.scale_cross(subimage, 2, 3);
     canvas.put_subimage(35, 35, subimage2);
     canvas.put_subimage(50, 50, subimage);
     canvas.put_subimage(60, 60, textcanvas::n88_normal_font());
