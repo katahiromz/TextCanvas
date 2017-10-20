@@ -362,6 +362,9 @@ namespace textcanvas
         template <typename T_CONVERTER>
         Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv);
         template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+        Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code,
+                      T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back);
+        template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
         Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow,
                       T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back);
 
@@ -1350,6 +1353,15 @@ namespace textcanvas
         conv(other);
         put_subimage(x0, y0, other, fore, back);
         return Size(other.width(), other.height());
+    }
+    template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+    inline Size
+    TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t char_code,
+                         T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back)
+    {
+        coord_t iColumn = coord_t(char_code % font.columns());
+        coord_t iRow = coord_t(char_code / font.columns());
+        return put_char(x0, y0, font, iColumn, iRow, conv, fore, back);
     }
     template <typename T_CONVERTER>
     inline Size TextCanvas::put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv)
