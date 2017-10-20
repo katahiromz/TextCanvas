@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    28  // Version 28
+#define TEXT_CANVAS_HPP_    29  // Version 29
 
 #if _MSC_VER > 1000
     #pragma once
@@ -223,14 +223,14 @@ namespace textcanvas
         coord_t m_cell_height;
     };
 
-    inline const XbmFont& qbasic_font()
+    inline const XbmFont& qbasic8x16_font()
     {
-        // QBasic bitmap font
-        #include "bitmaps/qbasic_chars.xbm"
-        static const XbmFont qbasic_chars(
-            qbasic_chars_width, qbasic_chars_height,
-            qbasic_chars_bits, 16, 16, 8, 16);
-        return qbasic_chars;
+        // QBasic 8x16 bitmap font
+        #include "bitmaps/qbasic8x16_chars.xbm"
+        static const XbmFont qbasic8x16_chars(
+            qbasic8x16_chars_width, qbasic8x16_chars_height,
+            qbasic8x16_chars_bits, 16, 16, 8, 16);
+        return qbasic8x16_chars;
     }
 
     #ifndef TEXTCANVAS_NO_N88_FONTS
