@@ -97,12 +97,6 @@ namespace textcanvas
 
     double normalize_radian(double radian);
 
-    inline bool
-    in_rect(coord_t x, coord_t y, coord_t x0, coord_t y0, coord_t x1, coord_t y1)
-    {
-        return x0 <= x && x <= x1 && y0 <= y && y <= y1;
-    }
-
     bool get_polygon_box(Point& p0, Point& p1, size_t num_points, const Point *points);
 
     size_t crossing_number(const Point& p, const Points& points);
