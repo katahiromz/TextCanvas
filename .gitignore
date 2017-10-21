@@ -1,5 +1,6 @@
 a.txt
 a.exe
+a.cpp
 *.o
 *.obj
 ArcTest
