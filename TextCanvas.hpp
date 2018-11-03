@@ -47,6 +47,7 @@ static const color_t one = color_t(1);
 static const color_t space = color_t(' ');
 static const color_t newline = color_t('\n');
 static const color_t asterisk = color_t('*');
+static const color_t sharp = color_t('#');
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -343,10 +344,10 @@ class TextCanvas
     TextCanvas();
     TextCanvas(coord_t width,
                coord_t height,
-               color_t fore_color = asterisk,
+               color_t fore_color = sharp,
                color_t back_color = space);
     TextCanvas(const XbmImage& binary,
-               color_t fore_color = asterisk,
+               color_t fore_color = sharp,
                color_t back_color = space);
     TextCanvas(const TextCanvas& tc);
     TextCanvas& operator=(const TextCanvas& tc);
@@ -1196,7 +1197,7 @@ inline TextCanvas::TextCanvas()
   : m_width(0)
   , m_height(0)
   , m_text()
-  , m_fore_color(asterisk)
+  , m_fore_color(sharp)
   , m_back_color(space)
   , m_pos(0, 0)
 {}
