@@ -1,6 +1,20 @@
 This software is TextCanvas by katahiromz.
 It can render shapes as a string.
 
+----#####----
+-  #     #  -
+- #       # -
+-#         #-
+#           #
+#           #
+#           #
+#           #
+#           #
+-#         #-
+- #       # -
+-  #     #  -
+----#####----
+
 You can study how to render Japanese bitmap text.
                                                                         
                        #                                                
