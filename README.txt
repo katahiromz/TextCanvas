@@ -2,7 +2,6 @@ This software is TextCanvas by katahiromz.
 It can render shapes as a string.
 
 You can study how to render Japanese text.
-
                                                                         
                        #                                                
                        #         #### ########               #          
@@ -20,6 +19,12 @@ You can study how to render Japanese text.
    #########           #         #  #  #    #    #         #    #     # 
    #       #           #         ####  ######   #          #            
                        #         #  #  #    #                           
+
+You can use this software under SIL Open Font License 1.1.
+http://jikasei.me/info/license.html
+
+Copyright (c) Keitarou Hiraki, Font Silo. 1990-2015
+Copyright (C) Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
 
 /////////////////////////////////////////////////////
 // Katayama Hirofumi MZ (katahiromz) [A.N.T.]
