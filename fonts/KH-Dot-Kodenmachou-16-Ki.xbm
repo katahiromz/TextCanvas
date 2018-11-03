@@ -1,3 +1,6 @@
+/* Copyright (c) Keitarou Hiraki, Font Silo. 1990-2015
+   Copyright (C) Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
+   License: SIL Open Font License 1.1 */
 #define KH_Dot_Kodenmachou_16_Ki_width 1504
 #define KH_Dot_Kodenmachou_16_Ki_height 1504
 static unsigned char KH_Dot_Kodenmachou_16_Ki_bits[] = {
