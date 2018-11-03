@@ -13,3 +13,4 @@ You can use this font under SIL Open Font License 1.1.
 http://jikasei.me/info/license.html
 
 Copyright (c) Keitarou Hiraki, Font Silo. 1990-2015
+Copyright (C) Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
