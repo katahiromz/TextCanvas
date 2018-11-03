@@ -294,7 +294,7 @@ namespace textcanvas
         }
         inline const XbmFont& kh_dot_hankaku_font()
         {
-            // "KH Dot Kodenmachou 16 Ki" Zenkaku font
+            // "KH Dot Kodenmachou 16 Ki" Hankaku font
             #include "fonts/KH-Dot-Kodenmachou-16-Ki-ASCII.xbm"
             static const XbmFont kh_dot_font_hankaku_chars(
                 KH_Dot_Kodenmachou_16_Ki_ASCII_width,
