@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef TEXT_CANVAS_HPP_
-#define TEXT_CANVAS_HPP_    32  // Version 32
+#define TEXT_CANVAS_HPP_    33  // Version 33
 
 #if _MSC_VER > 1000
     #pragma once
