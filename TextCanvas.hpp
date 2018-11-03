@@ -289,7 +289,7 @@ namespace textcanvas
             #include "fonts/KH-Dot-Kodenmachou-16-Ki.xbm"
             static const XbmFont kh_dot_font_zenkaku_chars(
                 KH_Dot_Kodenmachou_16_Ki_width, KH_Dot_Kodenmachou_16_Ki_height,
-                KH_Dot_Kodenmachou_16_Ki_bits, 16, 16, 16, 16);
+                KH_Dot_Kodenmachou_16_Ki_bits, 0x7E - 0x21 + 1, 0x7E - 0x21 + 1, 16, 16);
             return kh_dot_font_zenkaku_chars;
         }
         inline const XbmFont& kh_dot_hankaku_font()
@@ -400,6 +400,20 @@ namespace textcanvas
         Size put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow,
                       T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back);
 
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code);
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow);
+
+        template <typename T_CONVERTER>
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code, T_CONVERTER& conv);
+        template <typename T_CONVERTER>
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv);
+        template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code,
+                          T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back);
+        template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+        Size jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow,
+                          T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back);
+
         // draw text rightward
         void text_to_right(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text);
         void text_to_right(const Point& p0, const XbmFont& font, const string_type& text);
@@ -407,6 +421,14 @@ namespace textcanvas
         void text_to_right(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, T_CONVERTER& conv);
         template <typename T_CONVERTER>
         void text_to_right(const Point& p0, const XbmFont& font, const string_type& text, T_CONVERTER& conv);
+
+        // japanese draw text rightward
+        void sjis_text_to_right(coord_t x0, coord_t y0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text);
+        void sjis_text_to_right(const Point& p0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text);
+        template <typename T_CONVERTER>
+        void sjis_text_to_right(coord_t x0, coord_t y0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text, T_CONVERTER& conv);
+        template <typename T_CONVERTER>
+        void sjis_text_to_right(const Point& p0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text, T_CONVERTER& conv);
 
         void flood_fill(coord_t x, coord_t y, color_t ch, bool surface = false);
         void flood_fill(const Point& p, color_t ch, bool surface = false);
@@ -1423,6 +1445,57 @@ namespace textcanvas
         return put_char(x0, y0, font, char_code, conv);
     }
 
+    template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code,
+                                         T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back)
+    {
+        assert(japanese::is_jis_code(jis_code));
+        coord_t iColumn = uint8_t(jis_code) - 0x21;
+        coord_t iRow = uint8_t(jis_code >> 8) - 0x21;
+        return jis_put_char(x0, y0, font, iColumn, iRow, conv, fore, back);
+    }
+    template <typename T_CONVERTER, typename T_PUTTER0, typename T_PUTTER1>
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow,
+                                         T_CONVERTER& conv, T_PUTTER0& fore, T_PUTTER1& back)
+    {
+        assert(0 <= iColumn && iColumn < font.columns());
+        assert(0 <= iRow && iRow < font.rows());
+        coord_t qx0 = iColumn * font.cell_width();
+        coord_t qy0 = iRow * font.cell_height();
+        coord_t qx1 = qx0 + font.cell_width() - 1;
+        coord_t qy1 = qy0 + font.cell_height() - 1;
+        TextCanvas other;
+        font.get_subimage(other, qx0, qy0, qx1, qy1);
+        conv(other);
+        put_subimage(x0, y0, other, fore, back);
+        return Size(other.width(), other.height());
+    }
+    template <typename T_CONVERTER>
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow, T_CONVERTER& conv)
+    {
+        ColorPutter fore(*this, fore_color());
+        ColorPutter back(*this, back_color());
+        return jis_put_char(x0, y0, font, iColumn, iRow, conv, fore, back);
+    }
+    template <typename T_CONVERTER>
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code, T_CONVERTER& conv)
+    {
+        assert(japanese::is_jis_code(jis_code));
+        coord_t iColumn = uint8_t(jis_code) - 0x21;
+        coord_t iRow = uint8_t(jis_code >> 8) - 0x21;
+        return jis_put_char(x0, y0, font, iColumn, iRow, conv);
+    }
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t iColumn, coord_t iRow)
+    {
+        NoneConverter conv;
+        return jis_put_char(x0, y0, font, iColumn, iRow, conv);
+    }
+    inline Size TextCanvas::jis_put_char(coord_t x0, coord_t y0, const XbmFont& font, coord_t jis_code)
+    {
+        NoneConverter conv;
+        return jis_put_char(x0, y0, font, jis_code, conv);
+    }
+
     template <typename T_CONVERTER>
     inline void TextCanvas::text_to_right(coord_t x0, coord_t y0, const XbmFont& font, const string_type& text, T_CONVERTER& conv)
     {
@@ -1446,6 +1519,41 @@ namespace textcanvas
     inline void TextCanvas::text_to_right(const Point& p0, const XbmFont& font, const string_type& text)
     {
         text_to_right(p0.x, p0.y, font, text);
+    }
+
+    inline void TextCanvas::sjis_text_to_right(coord_t x0, coord_t y0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text)
+    {
+        NoneConverter conv;
+        sjis_text_to_right(x0, y0, zenkaku_font, hankaku_font, text, conv);
+    }
+    inline void TextCanvas::sjis_text_to_right(const Point& p0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text)
+    {
+        NoneConverter conv;
+        sjis_text_to_right(p0.x, p0.y, zenkaku_font, hankaku_font, text, conv);
+    }
+    template <typename T_CONVERTER>
+    inline void TextCanvas::sjis_text_to_right(coord_t x0, coord_t y0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text, T_CONVERTER& conv)
+    {
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            if (i + 1 < text.size() &&
+                japanese::is_sjis_lead(text[i]) &&
+                japanese::is_sjis_trail(text[i + 1]))
+            {
+                uint16_t jis_code = japanese::sjis2jis(text[i], text[i + 1]);
+                x0 += jis_put_char(x0, y0, zenkaku_font, jis_code, conv).x;
+                ++i;
+            }
+            else
+            {
+                x0 += put_char(x0, y0, hankaku_font, (uint8_t)text[i], conv).x;
+            }
+        }
+    }
+    template <typename T_CONVERTER>
+    inline void TextCanvas::sjis_text_to_right(const Point& p0, const XbmFont& zenkaku_font, const XbmFont& hankaku_font, const string_type& text, T_CONVERTER& conv)
+    {
+        sjis_text_to_right(p0.x, p0.y, zenkaku_font, hankaku_font, text, conv);
     }
 
     inline void TextCanvas::flood_fill(coord_t x, coord_t y, color_t ch, bool surface)
