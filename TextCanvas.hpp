@@ -24,6 +24,9 @@
 
 #include "japanese.hpp"
 
+#define TEXTCANVAS_NO_N88_FONTS
+#define TEXTCANVAS_NO_QBASIC_FONTS
+
 ///////////////////////////////////////////////////////////////////////////
 
 namespace textcanvas
@@ -225,21 +228,26 @@ namespace textcanvas
         coord_t m_cell_height;
     };
 
-    inline const XbmFont& qbasic8x16_font()
-    {
-        // QBasic 8x16 bitmap font
-        #include "bitmaps/qbasic8x16_chars.xbm"
-        static const XbmFont qbasic8x16_chars(
-            qbasic8x16_chars_width, qbasic8x16_chars_height,
-            qbasic8x16_chars_bits, 16, 16, 8, 16);
-        return qbasic8x16_chars;
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    // supported fonts
+
+    #ifndef TEXTCANVAS_NO_QBASIC_FONTS
+        inline const XbmFont& qbasic8x16_font()
+        {
+            // QBasic 8x16 bitmap font
+            #include "fonts/qbasic8x16_chars.xbm"
+            static const XbmFont qbasic8x16_chars(
+                qbasic8x16_chars_width, qbasic8x16_chars_height,
+                qbasic8x16_chars_bits, 16, 16, 8, 16);
+            return qbasic8x16_chars;
+        }
+    #endif
 
     #ifndef TEXTCANVAS_NO_N88_FONTS
         inline const XbmFont& n88_normal_font()
         {
             // PC-8801 bitmap font
-            #include "bitmaps/n88_normal_chars.xbm"
+            #include "fonts/n88_normal_chars.xbm"
             static const XbmFont n88_normal_chars(
                 n88_normal_chars_width, n88_normal_chars_height,
                 n88_normal_chars_bits, 256, 1, 8, 16);
@@ -248,7 +256,7 @@ namespace textcanvas
         inline const XbmFont& n88_quality_font()
         {
             // PC-9801 bitmap font
-            #include "bitmaps/n88_quality_chars.xbm"
+            #include "fonts/n88_quality_chars.xbm"
             static const XbmFont n88_quality_chars(
                 n88_quality_chars_width, n88_quality_chars_height,
                 n88_quality_chars_bits, 256, 1, 8, 16);
@@ -257,7 +265,7 @@ namespace textcanvas
         inline const XbmFont& n88_graph_font()
         {
             // PC-8801 graphical bitmap font
-            #include "bitmaps/n88_graph_chars.xbm"
+            #include "fonts/n88_graph_chars.xbm"
             static const XbmFont n88_graph_chars(
                 n88_graph_chars_width, n88_graph_chars_height,
                 n88_graph_chars_bits, 256, 1, 8, 16);
@@ -266,11 +274,33 @@ namespace textcanvas
         inline const XbmFont& n88_quarter_font()
         {
             // PC-9801 quarter bitmap font
-            #include "bitmaps/n88_quarter_chars.xbm"
+            #include "fonts/n88_quarter_chars.xbm"
             static const XbmFont n88_quarter_chars(
                 n88_quarter_chars_width, n88_quarter_chars_height,
                 n88_quarter_chars_bits, 256, 1, 8, 8);
             return n88_quarter_chars;
+        }
+    #endif
+
+    #ifndef TEXTCANVAS_NO_KHDOTFONT
+        inline const XbmFont& kh_dot_zenkaku_font()
+        {
+            // "KH Dot Kodenmachou 16 Ki" Zenkaku font
+            #include "fonts/KH-Dot-Kodenmachou-16-Ki.xbm"
+            static const XbmFont kh_dot_font_zenkaku_chars(
+                KH_Dot_Kodenmachou_16_Ki_width, KH_Dot_Kodenmachou_16_Ki_height,
+                KH_Dot_Kodenmachou_16_Ki_bits, 16, 16, 16, 16);
+            return kh_dot_font_zenkaku_chars;
+        }
+        inline const XbmFont& kh_dot_hankaku_font()
+        {
+            // "KH Dot Kodenmachou 16 Ki" Zenkaku font
+            #include "fonts/KH-Dot-Kodenmachou-16-Ki-ASCII.xbm"
+            static const XbmFont kh_dot_font_hankaku_chars(
+                KH_Dot_Kodenmachou_16_Ki_ASCII_width,
+                KH_Dot_Kodenmachou_16_Ki_ASCII_height,
+                KH_Dot_Kodenmachou_16_Ki_ASCII_bits, 16, 16, 8, 16);
+            return kh_dot_font_hankaku_chars;
         }
     #endif
 

@@ -11,7 +11,7 @@ int main(void)
     subimage2.scale_cross(subimage, 2, 3);
     canvas.put_subimage(35, 35, subimage2);
     canvas.put_subimage(50, 50, subimage);
-    canvas.put_subimage(60, 60, textcanvas::n88_normal_font());
+    canvas.put_subimage(60, 60, textcanvas::kh_dot_hankaku_font());
     std::cout << canvas.to_str();
     return 0;
 }
